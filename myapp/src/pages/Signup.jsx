@@ -104,10 +104,10 @@ export const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-100 flex flex-col justify-center py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link to="/signup" className="inline-block group mb-3">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-white p-2.5 shadow-xl shadow-blue-500/10 border border-slate-200/80 group-hover:scale-105 transition-transform duration-200">
+        <Link to="/signup" className="inline-block group mb-2">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-white p-1.5 shadow-md shadow-blue-500/10 border border-slate-200/80 group-hover:scale-105 transition-transform duration-200">
             <img
               src="/logo.png"
               alt="CampusSettle"
@@ -115,17 +115,17 @@ export const Signup = () => {
             />
           </div>
         </Link>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           Create an Account
         </h2>
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto font-medium">
+        <p className="mt-0.5 text-xs text-slate-500 max-w-xs mx-auto font-medium">
           Join CampusSettle and start splitting student expenses transparently.
         </p>
       </div>
 
-      <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-lg shadow-slate-200/50">
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="mt-4 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-6 px-5 sm:px-8 rounded-3xl border border-slate-200/80 shadow-lg shadow-slate-200/50">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <Input
               label="Full Name"
               name="name"
@@ -214,7 +214,7 @@ export const Signup = () => {
 
             <Button
               type="submit"
-              className="w-full mt-2"
+              className="w-full mt-1"
               size="lg"
               loading={loading}
               icon={UserPlus}
@@ -223,11 +223,11 @@ export const Signup = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500">
+          <div className="mt-4 pt-3.5 border-t border-slate-100 text-center text-xs text-slate-500">
             Already have an account?{' '}
             <Link
               to="/login"
-              className="font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5"
+              className="font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5 ml-1"
             >
               Sign in
             </Link>
