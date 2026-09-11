@@ -1,7 +1,12 @@
 import Group from "../models/group.model.js";
 import GroupMember from "../models/groupMember.model.js";
-import User from "../models/user.model.js";
+import Expense from "../models/expense.model.js";
+import ExpenseItem from "../models/expenseItem.model.js";
+import ExpenseSplit from "../models/expenseSplit.model.js";
+import GroupInvitation from "../models/groupInvitation.model.js";
+import Payment from "../models/payment.model.js";
 import Activity from "../models/activity.model.js";
+import User from "../models/user.model.js";
 
 
 // ===============================
@@ -277,10 +282,104 @@ export const removeMember = async (req, res) => {
       });
     }
 
+    // Create activity for member removal
+    const user = await User.findById(userId);
+    if (user && group) {
+      await Activity.create({
+        type: "member_removed",
+        description: `${user.name} removed from ${group.name}`,
+        userId: user._id,
+        userName: user.name,
+        groupId: group._id,
+        groupName: group.name,
+        entityId: user._id,
+        entityType: "member",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: "Member removed successfully.",
       data: member,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// ===============================
+// DELETE GROUP
+// ===============================
+export const deleteGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    // Find the group and verify the user is the creator
+    const group = await Group.findById(groupId);
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found.",
+      });
+    }
+
+    if (group.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Only group creator can delete this group.",
+      });
+    }
+
+    // Start a session for transaction if needed, but we'll do sequential deletes for simplicity
+    // In a production app, we might want to use transactions
+
+    // Delete activities related to the group
+    await Activity.deleteMany({ groupId });
+
+    // Delete expense splits for expenses in the group
+    const expenses = await Expense.find({ groupId });
+    const expenseIds = expenses.map(exp => exp._id);
+    await ExpenseSplit.deleteMany({ expenseId: { $in: expenseIds } });
+
+    // Delete expense items for expenses in the group
+    await ExpenseItem.deleteMany({ expenseId: { $in: expenseIds } });
+
+    // Delete expenses for the group
+    await Expense.deleteMany({ groupId });
+
+    // Delete payments for the group
+    await Payment.deleteMany({ groupId });
+
+    // Delete group invitations for the group
+    await GroupInvitation.deleteMany({ groupId });
+
+    // Delete group members for the group
+    await GroupMember.deleteMany({ groupId });
+
+    // Finally, delete the group
+    await Group.findByIdAndDelete(groupId);
+
+    // Optionally, create an activity for group deletion (though the group is deleted, we can still create an activity with the group's last known data)
+    await Activity.create({
+      type: "group_deleted",
+      description: `${req.user.name} deleted group ${group.name}`,
+      userId: req.user.id,
+      userName: req.user.name,
+      groupId: group._id, // Note: group still exists at this point until the delete above, but we are using the group object we fetched earlier
+      groupName: group.name,
+      entityId: group._id,
+      entityType: "group",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Group deleted successfully.",
     });
 
   } catch (error) {

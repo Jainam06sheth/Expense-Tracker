@@ -1,0 +1,1075 @@
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+} from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Users,
+  Receipt,
+  Scale,
+  HandCoins,
+  TrendingUp,
+  Plus,
+  FolderPlus,
+  Filter,
+} from 'lucide-react';
+
+import { StatCard } from '../components/dashboard/StatCard';
+import { QuickActions } from '../components/dashboard/QuickActions';
+import { SpendingChart } from '../components/dashboard/SpendingChart';
+import { GroupSummary } from '../components/dashboard/GroupSummary';
+import { BalanceOverview } from '../components/dashboard/BalanceOverview';
+import { RecentExpenses } from '../components/dashboard/RecentExpenses';
+import { RecentActivity } from '../components/dashboard/RecentActivity';
+
+import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
+import { Input } from '../components/common/Input';
+import { Select } from '../components/common/Select';
+
+import { userService } from '../services/userService';
+import { groupService } from '../services/groupService';
+import { expenseService } from '../services/expenseService';
+import { paymentService } from '../services/paymentService';
+import { activityService } from '../services/activityService';
+
+import { calculateUserOverallSummary } from '../utils/balanceCalculator';
+import { formatCurrency } from '../utils/currencyFormatter';
+
+import {
+  parseISO,
+  isThisMonth,
+  isThisYear,
+  subMonths,
+  isAfter,
+  format,
+} from 'date-fns';
+
+import toast from 'react-hot-toast';
+
+export const Dashboard = () => {
+  const navigate = useNavigate();
+
+  const [currentUser, setCurrentUser] =
+    useState(
+      userService.getCurrentUser()
+    );
+
+  const [groups, setGroups] =
+    useState([]);
+
+  const [expenses, setExpenses] =
+    useState([]);
+
+  const [payments, setPayments] =
+    useState([]);
+
+  const [activities, setActivities] =
+    useState([]);
+
+  const [users, setUsers] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  // Date Filter
+  const [timeFilter, setTimeFilter] =
+    useState('all');
+
+  // Modals
+  const [
+    createGroupModalOpen,
+    setCreateGroupModalOpen,
+  ] = useState(false);
+
+  const [newGroupName, setNewGroupName] =
+    useState('');
+
+  const [
+    newGroupCategory,
+    setNewGroupCategory,
+  ] = useState('Travel');
+
+  const [
+    newGroupDescription,
+    setNewGroupDescription,
+  ] = useState('');
+
+  const [
+    inviteModalOpen,
+    setInviteModalOpen,
+  ] = useState(false);
+
+  /*
+   * Load dashboard data
+   */
+  useEffect(() => {
+    const loadDashboardData =
+      async () => {
+        try {
+          setLoading(true);
+
+          /*
+           * Current user
+           */
+          const profileResult =
+            await userService.loadProfile();
+
+          if (
+            profileResult.success &&
+            profileResult.user
+          ) {
+            setCurrentUser(
+              profileResult.user
+            );
+          }
+
+          /*
+           * Groups
+           */
+          const groupsData =
+            await groupService.getAll();
+
+          const safeGroups =
+            groupsData || [];
+
+          setGroups(safeGroups);
+
+          /*
+           * Users collected from group members
+           *
+           * There is currently no GET /api/users
+           */
+          const userMap =
+            new Map();
+
+          if (
+            profileResult.success &&
+            profileResult.user
+          ) {
+            userMap.set(
+              String(
+                profileResult.user.id
+              ),
+              profileResult.user
+            );
+          }
+
+          /*
+           * Load expenses, payments and
+           * members for every group.
+           */
+          const allExpenses = [];
+          const allPayments = [];
+
+          for (
+            const group of safeGroups
+          ) {
+            const groupId =
+              group.id ||
+              group._id;
+
+            /*
+             * Expenses
+             */
+            try {
+              const groupExpenses =
+                await expenseService.getByGroup(
+                  groupId
+                );
+
+              allExpenses.push(
+                ...(groupExpenses || [])
+              );
+            } catch (error) {
+              console.error(
+                `Unable to load expenses for group ${groupId}:`,
+                error
+              );
+            }
+
+            /*
+             * Payments
+             */
+            try {
+              const groupPayments =
+                await paymentService.getByGroup(
+                  groupId
+                );
+
+              allPayments.push(
+                ...(groupPayments || [])
+              );
+            } catch (error) {
+              console.error(
+                `Unable to load payments for group ${groupId}:`,
+                error
+              );
+            }
+
+            /*
+             * Members
+             */
+            try {
+              const members =
+                await groupService.getMembers(
+                  groupId
+                );
+
+              (members || []).forEach(
+                (member) => {
+                  const memberUser =
+                    member.user ||
+                    member;
+
+                  const memberId =
+                    memberUser.id ||
+                    memberUser._id ||
+                    member.userId;
+
+                  if (!memberId) {
+                    return;
+                  }
+
+                  userMap.set(
+                    String(memberId),
+                    {
+                      ...memberUser,
+                      id: memberId,
+                      _id: memberId,
+                      name:
+                        memberUser.name ||
+                        member.name ||
+                        'Member',
+                      email:
+                        memberUser.email ||
+                        member.email ||
+                        '',
+                    }
+                  );
+                }
+              );
+            } catch (error) {
+              console.error(
+                `Unable to load members for group ${groupId}:`,
+                error
+              );
+            }
+          }
+
+          setExpenses(
+            allExpenses
+          );
+
+          setPayments(
+            allPayments
+          );
+
+          setUsers(
+            Array.from(
+              userMap.values()
+            )
+          );
+
+          /*
+           * Activities
+           */
+          try {
+            const activitiesData =
+              await activityService.getMine();
+
+            setActivities(
+              activitiesData || []
+            );
+          } catch (error) {
+            console.error(
+              'Unable to load activities:',
+              error
+            );
+
+            setActivities([]);
+          }
+        } catch (error) {
+          console.error(
+            'Error loading dashboard:',
+            error
+          );
+
+          toast.error(
+            error.message ||
+              'Unable to load dashboard'
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+    loadDashboardData();
+  }, []);
+
+  /*
+   * Time-of-day greeting
+   */
+  const greeting = useMemo(() => {
+    const hour =
+      new Date().getHours();
+
+    let timeGreeting =
+      'Good Morning';
+
+    if (
+      hour >= 12 &&
+      hour < 17
+    ) {
+      timeGreeting =
+        'Good Afternoon';
+    } else if (hour >= 17) {
+      timeGreeting =
+        'Good Evening';
+    }
+
+    return `${timeGreeting}, ${
+      currentUser?.name ||
+      'Bharat'
+    } 👋`;
+  }, [currentUser]);
+
+  /*
+   * Filtered Expenses
+   */
+  const filteredExpenses =
+    useMemo(() => {
+      const now =
+        new Date();
+
+      return expenses.filter(
+        (expense) => {
+          try {
+            const date =
+              parseISO(
+                expense.date
+              );
+
+            if (
+              timeFilter ===
+              'this_month'
+            ) {
+              return isThisMonth(
+                date
+              );
+            }
+
+            if (
+              timeFilter ===
+              'last_month'
+            ) {
+              const lastMonthDate =
+                subMonths(
+                  now,
+                  1
+                );
+
+              return (
+                date.getMonth() ===
+                  lastMonthDate.getMonth() &&
+                date.getFullYear() ===
+                  lastMonthDate.getFullYear()
+              );
+            }
+
+            if (
+              timeFilter ===
+              '3_months'
+            ) {
+              return isAfter(
+                date,
+                subMonths(
+                  now,
+                  3
+                )
+              );
+            }
+
+            if (
+              timeFilter ===
+              'this_year'
+            ) {
+              return isThisYear(
+                date
+              );
+            }
+
+            return true;
+          } catch {
+            return true;
+          }
+        }
+      );
+    }, [
+      expenses,
+      timeFilter,
+    ]);
+
+  /*
+   * Overall Balance
+   */
+  const balanceSummary =
+    useMemo(() => {
+      return calculateUserOverallSummary(
+        currentUser?.id || '',
+        expenses,
+        payments,
+        groups
+      );
+    }, [
+      currentUser,
+      expenses,
+      payments,
+      groups,
+    ]);
+
+  /*
+   * Groups map
+   */
+  const groupsMap = useMemo(() => {
+    const map = {};
+
+    groups.forEach(
+      (group) => {
+        const id =
+          group.id ||
+          group._id;
+
+        if (id) {
+          map[id] = {
+            ...group,
+            id,
+          };
+        }
+      }
+    );
+
+    return map;
+  }, [groups]);
+
+  /*
+   * Users map
+   */
+  const usersMap = useMemo(() => {
+    const map = {};
+
+    users.forEach(
+      (user) => {
+        const id =
+          user.id ||
+          user._id;
+
+        if (id) {
+          map[id] = {
+            ...user,
+            id,
+          };
+        }
+      }
+    );
+
+    return map;
+  }, [users]);
+
+  /*
+   * Monthly Spending Chart
+   */
+  const monthlyChartData =
+    useMemo(() => {
+      const monthTotals = {};
+
+      filteredExpenses.forEach(
+        (expense) => {
+          try {
+            const monthKey =
+              format(
+                parseISO(
+                  expense.date
+                ),
+                'MMM yyyy'
+              );
+
+            monthTotals[
+              monthKey
+            ] =
+              (monthTotals[
+                monthKey
+              ] || 0) +
+              (Number(
+                expense.amount
+              ) || 0);
+          } catch {
+            // Ignore invalid dates
+          }
+        }
+      );
+
+      return Object.entries(
+        monthTotals
+      ).map(
+        ([month, amount]) => ({
+          month,
+          amount:
+            Math.round(
+              amount * 100
+            ) / 100,
+        })
+      );
+    }, [
+      filteredExpenses,
+    ]);
+
+  /*
+   * Category Breakdown
+   */
+  const categoryChartData =
+    useMemo(() => {
+      const catTotals = {};
+
+      filteredExpenses.forEach(
+        (expense) => {
+          const category =
+            expense.category ||
+            'Other';
+
+          catTotals[
+            category
+          ] =
+            (catTotals[
+              category
+            ] || 0) +
+            (Number(
+              expense.amount
+            ) || 0);
+        }
+      );
+
+      return Object.entries(
+        catTotals
+      ).map(
+        ([category, amount]) => ({
+          category,
+          amount:
+            Math.round(
+              amount * 100
+            ) / 100,
+        })
+      );
+    }, [
+      filteredExpenses,
+    ]);
+
+  /*
+   * Create Group
+   */
+  const handleCreateGroup =
+    async (e) => {
+      e.preventDefault();
+
+      if (
+        !newGroupName.trim()
+      ) {
+        toast.error(
+          'Please provide a group name'
+        );
+        return;
+      }
+
+      try {
+        const created =
+          await groupService.create(
+            {
+              name:
+                newGroupName.trim(),
+              category:
+                newGroupCategory,
+              description:
+                newGroupDescription.trim(),
+            }
+          );
+
+        if (!created) {
+          toast.error(
+            'Unable to create group'
+          );
+          return;
+        }
+
+        setGroups((prev) => [
+          created,
+          ...prev,
+        ]);
+
+        /*
+         * Refresh activities from backend
+         */
+        try {
+          const activitiesData =
+            await activityService.getMine();
+
+          setActivities(
+            activitiesData || []
+          );
+        } catch {
+          // Activity refresh failure
+          // should not invalidate group creation.
+        }
+
+        toast.success(
+          `Group "${created.name}" created!`
+        );
+
+        setNewGroupName('');
+        setNewGroupDescription('');
+        setCreateGroupModalOpen(
+          false
+        );
+      } catch (error) {
+        console.error(
+          'Error creating group:',
+          error
+        );
+
+        toast.error(
+          error.message ||
+            'Unable to create group'
+        );
+      }
+    };
+
+  /*
+   * Invite link
+   */
+  const handleCopyInvite =
+    () => {
+      navigator.clipboard?.writeText(
+        window.location.origin
+      );
+
+      toast.success(
+        'CampusSettle invite link copied to clipboard!'
+      );
+
+      setInviteModalOpen(
+        false
+      );
+    };
+
+  /*
+   * Loading
+   */
+  if (loading) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-sm text-slate-500">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Header Greeting & Action Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {greeting}
+          </h2>
+
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Manage your groups, track shared expenses and settle balances easily.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            icon={FolderPlus}
+            onClick={() =>
+              setCreateGroupModalOpen(
+                true
+              )
+            }
+          >
+            Create Group
+          </Button>
+
+          <Button
+            variant="primary"
+            icon={Plus}
+            onClick={() =>
+              navigate(
+                '/expenses/add'
+              )
+            }
+          >
+            Add Expense
+          </Button>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <QuickActions
+        onOpenCreateGroup={() =>
+          setCreateGroupModalOpen(
+            true
+          )
+        }
+        onOpenInvite={() =>
+          setInviteModalOpen(
+            true
+          )
+        }
+      />
+
+      {/* Dashboard Filter Tabs */}
+      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+          <div className="px-2.5 py-1 text-slate-400 flex items-center gap-1 text-xs font-semibold">
+            <Filter className="w-3.5 h-3.5" />
+
+            <span className="hidden sm:inline">
+              Range:
+            </span>
+          </div>
+
+          {[
+            {
+              id: 'all',
+              label: 'All Time',
+            },
+            {
+              id: 'this_month',
+              label: 'This Month',
+            },
+            {
+              id: 'last_month',
+              label: 'Last Month',
+            },
+            {
+              id: '3_months',
+              label:
+                'Last 3 Months',
+            },
+            {
+              id: 'this_year',
+              label: 'This Year',
+            },
+          ].map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() =>
+                setTimeFilter(
+                  filter.id
+                )
+              }
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                timeFilter ===
+                filter.id
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+          Showing{' '}
+          {filteredExpenses.length}{' '}
+          expense
+          {filteredExpenses.length !==
+          1
+            ? 's'
+            : ''}
+        </span>
+      </div>
+
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Spent"
+          value={formatCurrency(
+            balanceSummary.totalSpent
+          )}
+          subtitle="Your total shared share"
+          icon={TrendingUp}
+          variant="blue"
+        />
+
+        <StatCard
+          title="You Are Owed"
+          value={formatCurrency(
+            balanceSummary.youAreOwed
+          )}
+          subtitle="Pending receivables"
+          icon={Scale}
+          variant="green"
+        />
+
+        <StatCard
+          title="You Owe"
+          value={formatCurrency(
+            balanceSummary.youOwe
+          )}
+          subtitle="Pending debts to friends"
+          icon={Receipt}
+          variant="rose"
+        />
+
+        <StatCard
+          title="Net Balance"
+          value={formatCurrency(
+            Math.abs(
+              balanceSummary.netBalance
+            )
+          )}
+          subtitle={
+            balanceSummary.netBalance >
+            0
+              ? 'Overall in profit'
+              : balanceSummary.netBalance <
+                0
+              ? 'Need to pay friends'
+              : 'All settled up'
+          }
+          icon={HandCoins}
+          variant={
+            balanceSummary.netBalance >
+            0
+              ? 'green'
+              : balanceSummary.netBalance <
+                0
+              ? 'rose'
+              : 'blue'
+          }
+          valueColor={
+            balanceSummary.netBalance >
+            0
+              ? 'text-emerald-600'
+              : balanceSummary.netBalance <
+                0
+              ? 'text-rose-600'
+              : 'text-slate-900'
+          }
+          bgColor={
+            balanceSummary.netBalance >
+            0
+              ? 'bg-emerald-50/50 border-emerald-100/80'
+              : balanceSummary.netBalance <
+                0
+              ? 'bg-rose-50/50 border-rose-100/80'
+              : 'bg-white'
+          }
+        />
+      </div>
+
+      {/* Charts & Balance Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <SpendingChart
+            monthlyData={
+              monthlyChartData
+            }
+            categoryData={
+              categoryChartData
+            }
+          />
+        </div>
+
+        <div>
+          <BalanceOverview
+            youAreOwed={
+              balanceSummary.youAreOwed
+            }
+            youOwe={
+              balanceSummary.youOwe
+            }
+            netBalance={
+              balanceSummary.netBalance
+            }
+            debtsByOtherUser={
+              balanceSummary.debtsByOtherUser
+            }
+            usersMap={usersMap}
+          />
+        </div>
+      </div>
+
+      {/* Groups & Recent Expenses */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GroupSummary
+          groups={groups}
+          expenses={expenses}
+        />
+
+        <RecentExpenses
+          expenses={
+            filteredExpenses
+          }
+          groupsMap={groupsMap}
+          usersMap={usersMap}
+        />
+      </div>
+
+      {/* Activity Timeline */}
+      <RecentActivity
+        activities={activities}
+      />
+
+      {/* Create Group Modal */}
+      <Modal
+        isOpen={
+          createGroupModalOpen
+        }
+        onClose={() =>
+          setCreateGroupModalOpen(
+            false
+          )
+        }
+        title="Create New Expense Group"
+        subtitle="Organize trips, apartment bills, or hostel food."
+        maxWidth="max-w-md"
+      >
+        <form
+          onSubmit={
+            handleCreateGroup
+          }
+          className="space-y-4"
+        >
+          <Input
+            label="Group Name"
+            placeholder="e.g. Manali Trip, Flat 402, Project Team"
+            value={newGroupName}
+            onChange={(e) =>
+              setNewGroupName(
+                e.target.value
+              )
+            }
+            required
+          />
+
+          <Select
+            label="Category"
+            value={
+              newGroupCategory
+            }
+            onChange={(e) =>
+              setNewGroupCategory(
+                e.target.value
+              )
+            }
+            options={[
+              {
+                value: 'Travel',
+                label:
+                  'Travel & Trips',
+              },
+              {
+                value: 'Hostel',
+                label:
+                  'Hostel & Rent',
+              },
+              {
+                value: 'Food',
+                label:
+                  'Food & Groceries',
+              },
+              {
+                value: 'College',
+                label:
+                  'College & Academics',
+              },
+              {
+                value: 'Bills',
+                label:
+                  'Utilities & Bills',
+              },
+              {
+                value: 'Other',
+                label: 'Other',
+              },
+            ]}
+            required
+          />
+
+          <Input
+            label="Description (Optional)"
+            placeholder="Short description for friends"
+            value={
+              newGroupDescription
+            }
+            onChange={(e) =>
+              setNewGroupDescription(
+                e.target.value
+              )
+            }
+          />
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setCreateGroupModalOpen(
+                  false
+                )
+              }
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit"
+              icon={FolderPlus}
+            >
+              Create Group
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Invite Friends Modal */}
+      <Modal
+        isOpen={inviteModalOpen}
+        onClose={() =>
+          setInviteModalOpen(
+            false
+          )
+        }
+        title="Invite Friends to CampusSettle"
+        subtitle="Share link with roommates and friends"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-center py-2">
+          <p className="text-xs text-slate-600">
+            Share this link with your friends to track shared expenses and settle balances
+            together:
+          </p>
+
+          <div className="p-3 bg-slate-100 rounded-xl font-mono text-xs text-slate-800 break-all select-all">
+            {window.location.origin}
+          </div>
+
+          <Button
+            onClick={
+              handleCopyInvite
+            }
+            className="w-full"
+          >
+            Copy Invite Link
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+};

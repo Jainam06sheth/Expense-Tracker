@@ -250,7 +250,7 @@ export const changePassword = async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
         message: "User not found.",
       });
@@ -275,6 +275,67 @@ export const changePassword = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Password changed successfully.",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// ===============================
+// GET ALL USERS
+// ===============================
+export const getAllUsers = async (req, res) => {
+  try {
+    const { email } = req.query;
+    let users;
+
+    if (email) {
+      // If email is provided, find users matching the email (case insensitive)
+      users = await User.find({ email: new RegExp(email, 'i') }).select("-password");
+    } else {
+      // Otherwise, get all users
+      users = await User.find().select("-password");
+    }
+
+    return res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// ===============================
+// GET USER BY ID
+// ===============================
+export const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: user,
     });
 
   } catch (error) {
