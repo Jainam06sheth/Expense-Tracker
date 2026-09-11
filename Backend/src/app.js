@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 
 import userRoutes from "./routes/user.routes.js";
 import groupRoutes from "./routes/group.routes.js";
@@ -13,6 +14,12 @@ import settingsRoutes from "./routes/userSettings.routes.js";
 
 const app = express();
 
+// cors configuration
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 
 // ========================================
 // MIDDLEWARE
