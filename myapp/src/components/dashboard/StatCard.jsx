@@ -7,6 +7,8 @@ export const StatCard = ({
   subtitle,
   icon: Icon,
   variant = 'blue', // 'blue', 'green', 'rose', 'amber', 'purple'
+  valueColor,
+  bgColor = 'bg-white',
   className = '',
 }) => {
   const variantStyles = {
@@ -40,13 +42,13 @@ export const StatCard = ({
   const style = variantStyles[variant] || variantStyles.blue;
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${style.border} ${className}`}>
+    <div className={`${bgColor} rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${style.border} ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             {title}
           </p>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 tracking-tight">
+          <h3 className={`text-xl sm:text-2xl font-black mt-1.5 tracking-tight ${valueColor || 'text-slate-900'}`}>
             {value}
           </h3>
           {subtitle && (

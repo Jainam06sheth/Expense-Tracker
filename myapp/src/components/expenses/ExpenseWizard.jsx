@@ -41,6 +41,7 @@ export const ExpenseWizard = ({
     name: initialData?.name || '',
     groupId: initialData?.groupId || (groups[0]?.id || ''),
     category: initialData?.category || 'Food',
+    customCategory: '',
     amount: initialData?.amount !== undefined ? String(initialData.amount) : '',
     paidBy: initialData?.paidBy || '',
     date: initialData?.date || new Date().toISOString(),
@@ -256,6 +257,7 @@ export const ExpenseWizard = ({
 
     const payload = {
       ...formData,
+      category: formData.category === 'Other' && formData.customCategory ? formData.customCategory : formData.category,
       amount: Number(formData.amount),
       items: formData.splitMethod === 'item-based' ? items : [],
       participants: finalParticipants,
@@ -268,8 +270,8 @@ export const ExpenseWizard = ({
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
       {/* Stepper Header */}
-      <div className="border-b border-slate-100 bg-slate-50/70 p-4 sm:p-6">
-        <div className="flex items-center justify-between max-w-2xl mx-auto overflow-x-auto pb-2 sm:pb-0">
+      <div className="border-b border-slate-100 bg-slate-50/70 p-4 sm:p-6 hidden md:block">
+        <div className="flex items-center justify-between max-w-2xl mx-auto pb-2 sm:pb-0">
           {STEPS.map((s, idx) => {
             const isCompleted = currentStep > s.id;
             const isCurrent = currentStep === s.id;

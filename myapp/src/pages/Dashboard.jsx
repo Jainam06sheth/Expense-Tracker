@@ -299,6 +299,20 @@ export const Dashboard = () => {
               ? 'rose'
               : 'blue'
           }
+          valueColor={
+            balanceSummary.netBalance > 0
+              ? 'text-emerald-600'
+              : balanceSummary.netBalance < 0
+              ? 'text-rose-600'
+              : 'text-slate-900'
+          }
+          bgColor={
+            balanceSummary.netBalance > 0
+              ? 'bg-emerald-50/50 border-emerald-100/80'
+              : balanceSummary.netBalance < 0
+              ? 'bg-rose-50/50 border-rose-100/80'
+              : 'bg-white'
+          }
         />
       </div>
 

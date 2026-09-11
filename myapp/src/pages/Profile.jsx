@@ -192,15 +192,6 @@ export const Profile = () => {
             required
           />
 
-          <Input
-            label="College / Campus Name"
-            name="college"
-            value={formData.college}
-            onChange={handleChange}
-            icon={School}
-            placeholder="e.g. Silver Oak University"
-          />
-
           <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
             <Button type="submit" loading={loading} icon={Save}>
               Save Profile Changes

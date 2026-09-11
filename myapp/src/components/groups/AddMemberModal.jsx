@@ -1,97 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
-import { validateRequired, validateEmail, validateMinLength } from '../../utils/validation';
-import { UserPlus } from 'lucide-react';
+import { Avatar } from '../common/Avatar';
+import { UserPlus, Search, Check } from 'lucide-react';
 
-export const AddMemberModal = ({ isOpen, onClose, onAddMember, loading = false }) => {
-  const [formData, setFormData] = useState({ name: '', email: '' });
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
+export const AddMemberModal = ({ isOpen, onClose, onAddMember, loading = false, users = [], groupMembers = [] }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  const validateField = (field, value) => {
-    if (field === 'name') {
-      const req = validateRequired(value, 'Name');
-      if (req) return req;
-      return validateMinLength(value, 2, 'Name');
-    }
-    if (field === 'email') {
-      return validateEmail(value);
-    }
-    return '';
-  };
+  // Debouncing the search term by 300ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (touched[name]) {
-      setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
-    }
-  };
+  const existingIds = new Set(groupMembers.map((m) => m.id));
 
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    setTouched((prev) => ({ ...prev, [name]: true }));
-    setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
-  };
+  // Filter users based on debounced term
+  const suggestions = debouncedTerm.trim()
+    ? users.filter(
+        (u) =>
+          u.name.toLowerCase().includes(debouncedTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(debouncedTerm.toLowerCase())
+      )
+    : [];
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const nameErr = validateField('name', formData.name);
-    const emailErr = validateField('email', formData.email);
-
-    if (nameErr || emailErr) {
-      setTouched({ name: true, email: true });
-      setErrors({ name: nameErr, email: emailErr });
-      return;
-    }
-
-    onAddMember(formData, () => {
-      setFormData({ name: '', email: '' });
-      setTouched({});
-      setErrors({});
+    if (!selectedUser) return;
+    
+    onAddMember(selectedUser, () => {
+      setSearchTerm('');
+      setSelectedUser(null);
       onClose();
     });
+  };
+
+  const handleClose = () => {
+    setSearchTerm('');
+    setSelectedUser(null);
+    onClose();
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Add Group Member"
-      subtitle="Invite a friend or roommate to split expenses with."
+      subtitle="Search and invite a registered user to this group."
       maxWidth="max-w-md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Full Name"
-          name="name"
-          placeholder="e.g. Manan Shah"
-          value={formData.name}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={touched.name ? errors.name : ''}
-          required
-        />
+        <div className="relative">
+          <Input
+            label="Search Registered Users"
+            placeholder="Type name (e.g. Bharat) or email..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              if (selectedUser) setSelectedUser(null);
+            }}
+            icon={Search}
+          />
 
-        <Input
-          label="Email Address"
-          name="email"
-          type="email"
-          placeholder="e.g. manan@campussettle.com"
-          value={formData.email}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={touched.email ? errors.email : ''}
-          required
-        />
+          {debouncedTerm && !selectedUser && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+              {suggestions.length > 0 ? (
+                suggestions.map((u) => {
+                  const isExisting = existingIds.has(u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      disabled={isExisting}
+                      onClick={() => {
+                        if (!isExisting) {
+                          setSelectedUser(u);
+                          setSearchTerm(u.name);
+                        }
+                      }}
+                      className={`w-full text-left px-4 py-3 flex items-center justify-between gap-3 transition-colors border-b border-slate-50 last:border-0 ${
+                        isExisting ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'hover:bg-slate-50 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar name={u.name} size="sm" />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">{u.name}</p>
+                          <p className="text-xs text-slate-500">{u.email}</p>
+                        </div>
+                      </div>
+                      {isExisting && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+                          In Group
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                  No matching registered users found.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {selectedUser && (
+          <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-between animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <Avatar name={selectedUser.name} size="sm" />
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">{selectedUser.name}</p>
+                <p className="text-xs text-emerald-700">{selectedUser.email}</p>
+              </div>
+            </div>
+            <Check className="w-5 h-5 text-emerald-600" />
+          </div>
+        )}
 
         <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+          <Button variant="secondary" onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" loading={loading} icon={UserPlus}>
+          <Button type="submit" loading={loading} disabled={!selectedUser} icon={UserPlus}>
             Add Member
           </Button>
         </div>
