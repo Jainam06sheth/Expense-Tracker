@@ -7,6 +7,8 @@ export const StatCard = ({
   subtitle,
   icon: Icon,
   variant = 'blue', // 'blue', 'green', 'rose', 'amber', 'purple'
+  valueColor,
+  bgColor = 'bg-white',
   className = '',
 }) => {
   const variantStyles = {
@@ -43,14 +45,14 @@ export const StatCard = ({
     <motion.div
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
-      className={`bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all ${style.border} ${className}`}
+      className={`${bgColor} rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all ${style.border} ${className}`}
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             {title}
           </p>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5 tracking-tight">
+          <h3 className={`text-xl sm:text-2xl font-black mt-1.5 tracking-tight ${valueColor || 'text-slate-900'}`}>
             {value}
           </h3>
           {subtitle && (

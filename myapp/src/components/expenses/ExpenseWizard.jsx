@@ -41,6 +41,7 @@ export const ExpenseWizard = ({
     name: initialData?.name || '',
     groupId: initialData?.groupId || (groups[0]?.id || ''),
     category: initialData?.category || 'Food',
+    customCategory: '',
     amount: initialData?.amount !== undefined ? String(initialData.amount) : '',
     paidBy: initialData?.paidBy || '',
     date: initialData?.date || new Date().toISOString(),
@@ -256,6 +257,10 @@ export const ExpenseWizard = ({
 
     const payload = {
       ...formData,
+      category:
+        formData.category === 'Other' && formData.customCategory?.trim()
+          ? formData.customCategory.trim()
+          : formData.category,
       amount: Number(formData.amount),
       items: formData.splitMethod === 'item-based' ? items : [],
       participants: finalParticipants,

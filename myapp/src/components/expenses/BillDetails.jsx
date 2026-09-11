@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
-import { Receipt, Calendar, DollarSign, Tag, Users } from 'lucide-react';
+import { Receipt, Calendar, IndianRupee, Tag, Users } from 'lucide-react';
 
 const CATEGORIES = [
   { value: 'Food', label: 'Food & Dining' },
@@ -67,7 +67,7 @@ export const BillDetails = ({
           value={formData.amount}
           onChange={onChange}
           error={errors.amount}
-          icon={DollarSign}
+          icon={IndianRupee}
           required
         />
 
@@ -93,6 +93,20 @@ export const BillDetails = ({
           required
         />
       </div>
+
+      {formData.category === 'Other' && (
+        <div className="animate-fadeIn">
+          <Input
+            label="Custom Category Name"
+            name="customCategory"
+            placeholder="e.g. Project Supplies, Maintenance"
+            value={formData.customCategory || ''}
+            onChange={onChange}
+            icon={Tag}
+            required
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select

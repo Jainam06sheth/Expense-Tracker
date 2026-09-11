@@ -69,16 +69,18 @@ export const Sidebar = ({ isOpen, onClose, currentUser }) => {
             <NavLink
               to="/dashboard"
               onClick={() => onClose?.()}
-              className="flex items-center gap-2.5 text-blue-600 hover:opacity-90"
+              className="flex items-center gap-3 text-blue-600 hover:opacity-90 transition-opacity"
             >
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-                <Sparkles className="w-5 h-5" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="CampusSettle"
+                className="w-10 h-10 object-contain rounded-xl drop-shadow-xs"
+              />
               <div className="flex flex-col">
-                <span className="font-extrabold text-base tracking-tight text-slate-900">
+                <span className="font-extrabold text-base tracking-tight text-slate-900 leading-tight">
                   Campus<span className="text-blue-600">Settle</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-600 -mt-1">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-600">
                   Expense Splitter
                 </span>
               </div>

@@ -354,6 +354,8 @@ export const GroupDetails = () => {
         isOpen={addMemberOpen}
         onClose={() => setAddMemberOpen(false)}
         onAddMember={handleAddMember}
+        users={users}
+        groupMembers={members}
       />
 
       <PaymentModal

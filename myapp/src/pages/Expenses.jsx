@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { expenseService } from '../services/expenseService';
 import { groupService } from '../services/groupService';
@@ -9,7 +9,7 @@ import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { EmptyState } from '../components/common/EmptyState';
-import { Plus, Search, Filter, ArrowUpDown, Receipt } from 'lucide-react';
+import { Plus, Search, Filter, ArrowUpDown, Receipt, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const Expenses = () => {
@@ -25,6 +25,10 @@ export const Expenses = () => {
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'highest' | 'lowest'
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   // Delete modal
   const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -46,6 +50,11 @@ export const Expenses = () => {
     });
     return map;
   }, [users]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedGroup, selectedCategory, sortBy]);
 
   // Filtering and Sorting
   const filteredAndSortedExpenses = useMemo(() => {
@@ -71,6 +80,13 @@ export const Expenses = () => {
     });
   }, [expenses, searchQuery, selectedGroup, selectedCategory, sortBy, usersMap]);
 
+  // Paginated Expenses
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedExpenses.length / itemsPerPage));
+  const paginatedExpenses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedExpenses.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedExpenses, currentPage]);
+
   const handleOpenDelete = (expense) => {
     setExpenseToDelete(expense);
     setDeleteConfirmOpen(true);
@@ -89,77 +105,75 @@ export const Expenses = () => {
     setExpenseToDelete(null);
   };
 
+  const groupFilterOptions = [
+    { value: 'all', label: 'All Groups' },
+    ...groups.map((g) => ({ value: g.id, label: g.name })),
+  ];
+
+  const categoryFilterOptions = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'Food', label: 'Food & Dining' },
+    { value: 'Travel', label: 'Travel & Transport' },
+    { value: 'Shopping', label: 'Shopping' },
+    { value: 'Bills', label: 'Bills & Utilities' },
+    { value: 'Entertainment', label: 'Entertainment' },
+    { value: 'College', label: 'College & Books' },
+    { value: 'Hostel', label: 'Hostel & Rent' },
+    { value: 'Other', label: 'Other' },
+  ];
+
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Expenses
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Browse, filter, and review all shared bills and line items.
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Expenses</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Search, filter, and inspect line-item splits across all your groups.
           </p>
         </div>
-
         <Button
-          variant="primary"
-          icon={Plus}
           onClick={() => navigate('/expenses/add')}
+          icon={Plus}
+          size="lg"
+          className="shadow-md shadow-blue-500/20"
         >
           Add Expense
         </Button>
       </div>
 
-      {/* Search & Filter Controls */}
+      {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="flex-1">
-            <Input
-              placeholder="Search expenses by title, notes, or payer..."
-              icon={Search}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Input
+            placeholder="Search by title, note, payer..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            icon={Search}
+          />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Select
-              value={selectedGroup}
-              onChange={(e) => setSelectedGroup(e.target.value)}
-              options={[
-                { value: 'all', label: 'All Groups' },
-                ...groups.map((g) => ({ value: g.id, label: g.name })),
-              ]}
-            />
+          <Select
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            options={groupFilterOptions}
+          />
 
-            <Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              options={[
-                { value: 'all', label: 'All Categories' },
-                { value: 'Food', label: 'Food & Dining' },
-                { value: 'Travel', label: 'Travel & Transport' },
-                { value: 'Bills', label: 'Bills & Utilities' },
-                { value: 'Hostel', label: 'Hostel & Rent' },
-                { value: 'Entertainment', label: 'Entertainment' },
-                { value: 'Shopping', label: 'Shopping' },
-                { value: 'College', label: 'College' },
-                { value: 'Other', label: 'Other' },
-              ]}
-            />
+          <Select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            options={categoryFilterOptions}
+          />
 
-            <Select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              options={[
-                { value: 'newest', label: 'Newest First' },
-                { value: 'oldest', label: 'Oldest First' },
-                { value: 'highest', label: 'Highest Amount' },
-                { value: 'lowest', label: 'Lowest Amount' },
-              ]}
-            />
-          </div>
+          <Select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            options={[
+              { value: 'newest', label: 'Newest First' },
+              { value: 'oldest', label: 'Oldest First' },
+              { value: 'highest', label: 'Highest Amount' },
+              { value: 'lowest', label: 'Lowest Amount' },
+            ]}
+          />
         </div>
       </div>
 
@@ -178,24 +192,85 @@ export const Expenses = () => {
           actionIcon={Plus}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredAndSortedExpenses.map((expense) => {
-            const group = groupsMap[expense.groupId];
-            const payer = usersMap[expense.paidBy];
-            return (
-              <ExpenseCard
-                key={expense.id}
-                expense={expense}
-                group={group}
-                payer={payer}
-                membersMap={usersMap}
-                currentUserId={currentUser?.id || 'user-bharat'}
-                onEdit={() => navigate(`/expenses/add?editId=${expense.id}`)}
-                onDelete={handleOpenDelete}
-              />
-            );
-          })}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {paginatedExpenses.map((expense) => {
+              const group = groupsMap[expense.groupId];
+              const payer = usersMap[expense.paidBy];
+              return (
+                <ExpenseCard
+                  key={expense.id}
+                  expense={expense}
+                  group={group}
+                  payer={payer}
+                  membersMap={usersMap}
+                  currentUserId={currentUser?.id || 'user-bharat'}
+                  onEdit={() => navigate(`/expenses/add?editId=${expense.id}`)}
+                  onDelete={handleOpenDelete}
+                />
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/80">
+              <p className="text-xs text-slate-500 font-medium">
+                Showing{' '}
+                <span className="font-bold text-slate-800">
+                  {(currentPage - 1) * itemsPerPage + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-bold text-slate-800">
+                  {Math.min(currentPage * itemsPerPage, filteredAndSortedExpenses.length)}
+                </span>{' '}
+                of{' '}
+                <span className="font-bold text-slate-800">
+                  {filteredAndSortedExpenses.length}
+                </span>{' '}
+                expenses
+              </p>
+
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  icon={ChevronLeft}
+                >
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1 px-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  icon={ChevronRight}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Confirm Delete Modal */}

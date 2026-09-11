@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, LogIn, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { userService } from '../services/userService';
@@ -65,21 +65,27 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25 mb-4">
-          <Sparkles className="w-6 h-6" />
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <Link to="/login" className="inline-block group mb-3">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-white p-2.5 shadow-xl shadow-blue-500/10 border border-slate-200/80 group-hover:scale-105 transition-transform duration-200">
+            <img
+              src="/logo.png"
+              alt="CampusSettle"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </Link>
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Welcome to Campus<span className="text-blue-600">Settle</span>
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-500">
-          Smart expense sharing & debt settlement for students and friends.
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto font-medium">
+          Smart expense sharing, item-based splits, and debt settlements for students.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-xs">
+      <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-lg shadow-slate-200/50">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email Address"
@@ -120,8 +126,8 @@ export const Login = () => {
               required
             />
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 cursor-pointer text-slate-600">
+            <div className="flex items-center justify-between text-xs pt-1">
+              <label className="flex items-center gap-2 cursor-pointer text-slate-600 font-medium">
                 <input
                   type="checkbox"
                   name="rememberMe"
@@ -135,7 +141,7 @@ export const Login = () => {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full shadow-md shadow-blue-500/20 mt-2"
               size="lg"
               loading={loading}
               icon={LogIn}
@@ -144,13 +150,13 @@ export const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500">
+          <div className="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-500">
             Don't have an account yet?{' '}
             <Link
               to="/signup"
-              className="font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5"
+              className="font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5 ml-1"
             >
-              Sign up <ArrowRight className="w-3 h-3" />
+              Create Account <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>

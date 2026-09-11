@@ -104,21 +104,27 @@ export const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25 mb-4">
-          <Sparkles className="w-6 h-6" />
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <Link to="/signup" className="inline-block group mb-3">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-white p-2.5 shadow-xl shadow-blue-500/10 border border-slate-200/80 group-hover:scale-105 transition-transform duration-200">
+            <img
+              src="/logo.png"
+              alt="CampusSettle"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </Link>
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           Create an Account
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-500">
-          Join CampusSettle and start splitting bills transparently.
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto font-medium">
+          Join CampusSettle and start splitting student expenses transparently.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-xs">
+      <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-slate-200/80 shadow-lg shadow-slate-200/50">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Full Name"
