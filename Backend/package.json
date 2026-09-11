@@ -16,15 +16,22 @@
   "scripts": {
     "start": "./src/server.js",
     "dev": "nodemon ./src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha \"__tests__/**/*.test.{js,cjs}\" --timeout 10000"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "environment": "^1.1.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.0",
     "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "chai": "^5.1.0",
+    "mocha": "^10.2.0",
+    "mongodb-memory-server": "^9.0.0",
+    "supertest": "^6.3.3"
   }
 }
