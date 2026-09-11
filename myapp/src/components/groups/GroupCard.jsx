@@ -5,7 +5,7 @@ import { formatCurrency } from '../../utils/currencyFormatter';
 
 export const GroupCard = ({ group, totalSpent = 0, userNetBalance = 0, onEdit, onDelete }) => {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-between group">
+    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">

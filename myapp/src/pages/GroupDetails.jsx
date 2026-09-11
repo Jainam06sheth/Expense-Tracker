@@ -233,11 +233,7 @@ export const GroupDetails = () => {
                     : 'text-slate-700'
                 }`}
               >
-                {userNetInGroup > 0
-                  ? `+${formatCurrency(userNetInGroup)}`
-                  : userNetInGroup < 0
-                  ? `-${formatCurrency(Math.abs(userNetInGroup))}`
-                  : 'Settled'}
+                {formatCurrency(Math.abs(userNetInGroup))}
               </span>
             </div>
           </div>

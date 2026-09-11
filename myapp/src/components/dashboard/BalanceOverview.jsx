@@ -53,11 +53,7 @@ export const BalanceOverview = ({
               Net Balance
             </span>
             <h2 className="text-2xl font-black tracking-tight mt-0.5">
-              {netBalance > 0
-                ? `+${formatCurrency(netBalance)}`
-                : netBalance < 0
-                ? `-${formatCurrency(Math.abs(netBalance))}`
-                : formatCurrency(0)}
+              {formatCurrency(Math.abs(netBalance))}
             </h2>
           </div>
           <span

@@ -123,11 +123,7 @@ export const Balances = () => {
                 : 'text-slate-900'
             }`}
           >
-            {overallSummary.netBalance > 0
-              ? `+${formatCurrency(overallSummary.netBalance)}`
-              : overallSummary.netBalance < 0
-              ? `-${formatCurrency(Math.abs(overallSummary.netBalance))}`
-              : formatCurrency(0)}
+            {formatCurrency(Math.abs(overallSummary.netBalance))}
           </h3>
           <p className="text-xs text-slate-400 mt-1">
             {overallSummary.netBalance > 0

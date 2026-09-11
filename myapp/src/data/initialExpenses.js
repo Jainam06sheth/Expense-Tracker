@@ -70,4 +70,25 @@ export const initialExpenses = [
     status: 'settled',
     createdAt: '2026-03-05T11:05:00.000Z',
   },
+  ...Array.from({ length: 15 }).map((_, i) => ({
+    id: `expense-dummy-${i}`,
+    name: `Dummy Expense ${i + 1}`,
+    groupId: 'group-goa-trip',
+    category: ['Food', 'Travel', 'Bills', 'Shopping', 'Entertainment'][i % 5],
+    amount: (i + 1) * 150,
+    paidBy: ['user-bharat', 'user-aman', 'user-priya', 'user-neha'][i % 4],
+    date: new Date(Date.now() - i * 86400000).toISOString(),
+    notes: `Dummy notes for expense ${i + 1}`,
+    splitMethod: 'equal',
+    items: [
+      { id: `item-dummy-${i}`, name: 'General', amount: (i + 1) * 150, participants: ['user-bharat', 'user-aman'] }
+    ],
+    participants: ['user-bharat', 'user-aman'],
+    splits: {
+      'user-bharat': ((i + 1) * 150) / 2,
+      'user-aman': ((i + 1) * 150) / 2,
+    },
+    status: i % 3 === 0 ? 'settled' : 'unsettled',
+    createdAt: new Date().toISOString(),
+  }))
 ];

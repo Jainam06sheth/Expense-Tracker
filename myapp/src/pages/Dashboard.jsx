@@ -283,13 +283,7 @@ export const Dashboard = () => {
 
         <StatCard
           title="Net Balance"
-          value={
-            balanceSummary.netBalance > 0
-              ? `+${formatCurrency(balanceSummary.netBalance)}`
-              : balanceSummary.netBalance < 0
-              ? `-${formatCurrency(Math.abs(balanceSummary.netBalance))}`
-              : formatCurrency(0)
-          }
+          value={formatCurrency(Math.abs(balanceSummary.netBalance))}
           subtitle={
             balanceSummary.netBalance > 0
               ? 'Overall in profit'

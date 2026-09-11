@@ -40,12 +40,8 @@ export const StatCard = ({
   const style = variantStyles[variant] || variantStyles.blue;
 
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.15 }}
-      className={`bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs transition-all ${style.border} ${className}`}
-    >
-      <div className="flex items-start justify-between">
+    <div className={`bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${style.border} ${className}`}>
+      <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             {title}
@@ -63,6 +59,6 @@ export const StatCard = ({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };

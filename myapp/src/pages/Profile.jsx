@@ -158,11 +158,7 @@ export const Profile = () => {
                   : 'text-slate-900'
               }`}
             >
-              {summary.netBalance > 0
-                ? `+${formatCurrency(summary.netBalance)}`
-                : summary.netBalance < 0
-                ? `-${formatCurrency(Math.abs(summary.netBalance))}`
-                : formatCurrency(0)}
+              {formatCurrency(Math.abs(summary.netBalance))}
             </span>
           </div>
         </div>

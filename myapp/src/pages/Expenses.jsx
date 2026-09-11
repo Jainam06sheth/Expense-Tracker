@@ -26,6 +26,10 @@ export const Expenses = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'highest' | 'lowest'
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
+
   // Delete modal
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -70,6 +74,17 @@ export const Expenses = () => {
       return 0;
     });
   }, [expenses, searchQuery, selectedGroup, selectedCategory, sortBy, usersMap]);
+
+  // Reset page to 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedGroup, selectedCategory, sortBy]);
+
+  const totalPages = Math.ceil(filteredAndSortedExpenses.length / itemsPerPage);
+  const paginatedExpenses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedExpenses.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedExpenses, currentPage]);
 
   const handleOpenDelete = (expense) => {
     setExpenseToDelete(expense);
@@ -178,24 +193,49 @@ export const Expenses = () => {
           actionIcon={Plus}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredAndSortedExpenses.map((expense) => {
-            const group = groupsMap[expense.groupId];
-            const payer = usersMap[expense.paidBy];
-            return (
-              <ExpenseCard
-                key={expense.id}
-                expense={expense}
-                group={group}
-                payer={payer}
-                membersMap={usersMap}
-                currentUserId={currentUser?.id || 'user-bharat'}
-                onEdit={() => navigate(`/expenses/add?editId=${expense.id}`)}
-                onDelete={handleOpenDelete}
-              />
-            );
-          })}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {paginatedExpenses.map((expense) => {
+              const group = groupsMap[expense.groupId];
+              const payer = usersMap[expense.paidBy];
+              return (
+                <ExpenseCard
+                  key={expense.id}
+                  expense={expense}
+                  group={group}
+                  payer={payer}
+                  membersMap={usersMap}
+                  currentUserId={currentUser?.id || 'user-bharat'}
+                  onEdit={() => navigate(`/expenses/add?editId=${expense.id}`)}
+                  onDelete={handleOpenDelete}
+                />
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm font-medium text-slate-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Confirm Delete Modal */}
