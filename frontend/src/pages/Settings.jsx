@@ -299,7 +299,7 @@ export const Settings = () => {
       {/* Reset Demo Data Card */}
       <div className="bg-white rounded-3xl border border-rose-100 p-6 sm:p-8 shadow-xs">
         <div className="flex items-start gap-3">
-          <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 flex-shrink-0">
+          <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
             <RotateCcw className="w-5 h-5" />
           </div>
 
