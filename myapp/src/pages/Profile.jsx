@@ -5,11 +5,11 @@ import { expenseService } from '../services/expenseService';
 import { paymentService } from '../services/paymentService';
 import { calculateUserOverallSummary } from '../utils/balanceCalculator';
 import { formatCurrency } from '../utils/currencyFormatter';
-import { validateRequired, validateEmail, validateMinLength } from '../utils/validation';
+import { validateRequired, validateEmail, validatePhone, validateMinLength } from '../utils/validation';
 import { Avatar } from '../components/common/Avatar';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
-import { User, Mail, School, Calendar, Save, Check } from 'lucide-react';
+import { User, Mail, School, Calendar, Save, Check, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const Profile = () => {
@@ -18,6 +18,7 @@ export const Profile = () => {
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
+    phone: currentUser?.phone || '',
     college: currentUser?.college || 'Silver Oak University',
   });
 
@@ -42,6 +43,9 @@ export const Profile = () => {
     if (field === 'email') {
       return validateEmail(value);
     }
+    if (field === 'phone') {
+      return validatePhone(value, false); // optional on existing profiles unless entered
+    }
     return '';
   };
 
@@ -63,10 +67,11 @@ export const Profile = () => {
     e.preventDefault();
     const nameErr = validateField('name', formData.name);
     const emailErr = validateField('email', formData.email);
+    const phoneErr = validateField('phone', formData.phone);
 
-    if (nameErr || emailErr) {
-      setTouched({ name: true, email: true });
-      setErrors({ name: nameErr, email: emailErr });
+    if (nameErr || emailErr || phoneErr) {
+      setTouched({ name: true, email: true, phone: true });
+      setErrors({ name: nameErr, email: emailErr, phone: phoneErr });
       return;
     }
 
@@ -75,6 +80,7 @@ export const Profile = () => {
       userService.update(currentUser.id, {
         name: formData.name.trim(),
         email: formData.email.trim(),
+        phone: formData.phone.trim(),
         college: formData.college.trim(),
       });
       setLoading(false);
@@ -107,6 +113,15 @@ export const Profile = () => {
             <h3 className="text-xl font-bold text-slate-900">{formData.name}</h3>
             <p className="text-xs text-slate-500 mt-0.5">{formData.email}</p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3 text-xs text-slate-600 font-medium">
+              {formData.phone && (
+                <>
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <Phone className="w-3.5 h-3.5 text-blue-600" />
+                    {formData.phone}
+                  </span>
+                  <span>•</span>
+                </>
+              )}
               <span className="flex items-center gap-1.5">
                 <School className="w-3.5 h-3.5 text-blue-600" />
                 {formData.college}
@@ -194,6 +209,18 @@ export const Profile = () => {
             error={touched.email ? errors.email : ''}
             icon={Mail}
             required
+          />
+
+          <Input
+            label="Mobile / Phone Number"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={touched.phone ? errors.phone : ''}
+            icon={Phone}
+            placeholder="e.g. 9876543210"
           />
 
           <Input

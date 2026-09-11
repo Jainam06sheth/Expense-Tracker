@@ -20,6 +20,19 @@ export const validateEmail = (email) => {
   return '';
 };
 
+export const validatePhone = (phone, required = true) => {
+  if (!phone || phone.trim() === '') {
+    if (required) return 'Phone number is required';
+    return '';
+  }
+  const cleanPhone = phone.trim().replace(/[\s\-()]/g, '');
+  const phoneRegex = /^(\+?\d{1,4})?[0-9]{10}$/;
+  if (!phoneRegex.test(cleanPhone)) {
+    return 'Please enter a valid 10-digit phone number';
+  }
+  return '';
+};
+
 export const validateAmount = (amount, fieldName = 'Amount') => {
   if (amount === undefined || amount === null || amount === '') {
     return `${fieldName} is required`;

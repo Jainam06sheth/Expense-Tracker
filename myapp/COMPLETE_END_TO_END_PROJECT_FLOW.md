@@ -52,13 +52,15 @@ flowchart TD
 
 ---
 
-### 🔹 STEP 1: Authentication & User Session Setup
-* **Screen**: `/login` (`src/pages/Login.jsx`)
-* **User Action**:
-  - User quick-demo chip par click karta hai: `Bharat (Admin)` ya apni email/password enter karke **"Sign In"** button par click karta hai.
+### 🔹 STEP 1: Authentication & User Registration Setup
+* **Screen**: `/login` & `/signup` (`src/pages/Login.jsx`, `src/pages/Signup.jsx`)
+* **User Action (Sign Up)**:
+  - Naya user apna **Full Name**, **Email Address**, **Mobile / Phone Number** (e.g. `9876543210`), aur **Password** daal kar **"Create Account"** par click karta hai.
+* **User Action (Login)**:
+  - Registered user apna email aur password enter karke **"Sign In"** button par click karta hai.
 * **Code Execution**:
-  1. `userService.login(email, password)` run hota hai.
-  2. Storage se `campussettle_users` array me email & password check hota hai.
+  1. `userService.signup({ name, email, phone, password })` ya `userService.login(email, password)` run hota hai.
+  2. Storage se `campussettle_users` array me validation check hota hai.
   3. Valid hone par session save hota hai.
 * **What is Created (JSON)**:
   ```json
@@ -66,6 +68,7 @@ flowchart TD
     "id": "user-bharat",
     "name": "Bharat",
     "email": "bharat@campussettle.com",
+    "phone": "+91 98765 43210",
     "avatar": "B",
     "avatarColor": "bg-blue-600",
     "college": "Silver Oak University"

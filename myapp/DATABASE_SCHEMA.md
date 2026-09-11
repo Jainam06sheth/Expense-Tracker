@@ -31,6 +31,7 @@ erDiagram
         string id PK "user-uuid"
         string name "Full Name"
         string email UK "Unique Email Address"
+        string phone "Mobile / Phone Number"
         string password_hash "Hashed Password"
         string avatar "Initial letter or Image URL"
         string avatar_color "Tailwind CSS color class"
@@ -139,6 +140,7 @@ Every field listed below directly corresponds to state values, form inputs, calc
 | `id` | `VARCHAR(64)` | `PRIMARY KEY` | `src/data/initialUsers.js`, `src/pages/Login.jsx`, `src/pages/Profile.jsx` | `userService.getCurrentUser()`, `userService.getById()` | Profile header, User ID badge, Author avatar | `"user-bharat"` |
 | `name` | `VARCHAR(100)` | `NOT NULL` | `src/pages/Profile.jsx`, `src/pages/Signup.jsx`, `src/components/layout/Header.jsx` | `userService.update()`, `userService.create()` | Top bar user dropdown, Edit Profile modal input | `"Bharat"` |
 | `email` | `VARCHAR(255)` | `NOT NULL, UNIQUE` | `src/pages/Login.jsx`, `src/pages/Signup.jsx`, `src/pages/Profile.jsx` | `userService.login()`, `userService.signup()` | Login input `name="email"`, Signup form input | `"bharat@campussettle.com"` |
+| `phone` | `VARCHAR(20)` | `NULL` | `src/pages/Signup.jsx`, `src/pages/Profile.jsx` | `userService.signup()`, `userService.update()` | Mobile Number input `name="phone"`, Profile header | `"+91 98765 43210"` |
 | `password_hash` | `VARCHAR(255)` | `NOT NULL` | `src/pages/Login.jsx`, `src/pages/Signup.jsx` | `userService.login()` | Auth password input (hashed via bcrypt in backend) | `"password123"` *(dev)* |
 | `avatar` | `VARCHAR(10)` | `DEFAULT 'U'` | `src/components/common/Avatar.jsx` | `userService.create()`, `src/pages/Profile.jsx` | Letter initial avatar `<Avatar name={user.name} />` | `"B"` |
 | `avatar_color` | `VARCHAR(50)` | `DEFAULT 'bg-blue-600'` | `src/components/common/Avatar.jsx` | `src/data/initialUsers.js` | Tailored Tailwind avatar background badge | `"bg-blue-600"` |
@@ -282,6 +284,7 @@ CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(64) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
+    phone VARCHAR(20),
     password_hash VARCHAR(255) NOT NULL,
     avatar VARCHAR(10) DEFAULT 'U',
     avatar_color VARCHAR(50) DEFAULT 'bg-blue-600',
@@ -450,6 +453,7 @@ model User {
   id             String         @id @default(uuid())
   name           String
   email          String         @unique
+  phone          String?
   passwordHash   String         @map("password_hash")
   avatar         String         @default("U")
   avatarColor    String         @default("bg-blue-600") @map("avatar_color")

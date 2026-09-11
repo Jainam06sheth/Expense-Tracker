@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, User, UserPlus, ArrowLeft } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, UserPlus, Phone, ArrowLeft } from 'lucide-react';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { userService } from '../services/userService';
 import {
   validateRequired,
   validateEmail,
+  validatePhone,
   validateMinLength,
   validateMaxLength,
   validatePassword,
@@ -18,6 +19,7 @@ export const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -35,6 +37,9 @@ export const Signup = () => {
     }
     if (field === 'email') {
       return validateEmail(value);
+    }
+    if (field === 'phone') {
+      return validatePhone(value);
     }
     if (field === 'password') {
       return validatePassword(value);
@@ -66,12 +71,13 @@ export const Signup = () => {
     e.preventDefault();
     const nameErr = validateField('name', formData.name);
     const emailErr = validateField('email', formData.email);
+    const phoneErr = validateField('phone', formData.phone);
     const passErr = validateField('password', formData.password);
     const confirmErr = validateField('confirmPassword', formData.confirmPassword);
 
-    if (nameErr || emailErr || passErr || confirmErr) {
-      setTouched({ name: true, email: true, password: true, confirmPassword: true });
-      setErrors({ name: nameErr, email: emailErr, password: passErr, confirmPassword: confirmErr });
+    if (nameErr || emailErr || phoneErr || passErr || confirmErr) {
+      setTouched({ name: true, email: true, phone: true, password: true, confirmPassword: true });
+      setErrors({ name: nameErr, email: emailErr, phone: phoneErr, password: passErr, confirmPassword: confirmErr });
       return;
     }
 
@@ -80,6 +86,7 @@ export const Signup = () => {
       const res = userService.signup({
         name: formData.name.trim(),
         email: formData.email.trim(),
+        phone: formData.phone.trim(),
         password: formData.password,
       });
       setLoading(false);
@@ -133,6 +140,19 @@ export const Signup = () => {
               onBlur={handleBlur}
               error={touched.email ? errors.email : ''}
               icon={Mail}
+              required
+            />
+
+            <Input
+              label="Mobile / Phone Number"
+              name="phone"
+              type="tel"
+              placeholder="e.g. 9876543210"
+              value={formData.phone}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.phone ? errors.phone : ''}
+              icon={Phone}
               required
             />
 

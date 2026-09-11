@@ -10,8 +10,8 @@ import toast from 'react-hot-toast';
 export const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: 'bharat@campussettle.com',
-    password: 'password123',
+    email: '',
+    password: '',
     rememberMe: true,
   });
   const [errors, setErrors] = useState({});
@@ -61,15 +61,6 @@ export const Login = () => {
         toast.error(res.message || 'Invalid credentials');
       }
     }, 400);
-  };
-
-  const handleQuickDemoLogin = (email, password) => {
-    setFormData({ email, password, rememberMe: true });
-    const res = userService.login(email, password);
-    if (res.success) {
-      toast.success(`Logged in as ${res.user.name}`);
-      navigate('/dashboard');
-    }
   };
 
   return (
@@ -128,8 +119,6 @@ export const Login = () => {
                 />
                 <span>Remember me</span>
               </label>
-
-              <span className="text-slate-400">Demo Mode</span>
             </div>
 
             <Button
@@ -142,29 +131,6 @@ export const Login = () => {
               Sign In
             </Button>
           </form>
-
-          {/* Quick Demo Accounts */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 text-center mb-3">
-              Quick Demo Logins
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('bharat@campussettle.com', 'password123')}
-                className="p-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold transition-colors cursor-pointer text-center"
-              >
-                Bharat (Primary)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('aman@campussettle.com', 'password123')}
-                className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold transition-colors cursor-pointer text-center"
-              >
-                Aman (Roommate)
-              </button>
-            </div>
-          </div>
 
           <div className="mt-6 text-center text-xs text-slate-500">
             Don't have an account yet?{' '}
