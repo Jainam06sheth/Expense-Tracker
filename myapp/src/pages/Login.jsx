@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
+import { Sparkles, Mail, Lock, LogIn, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { userService } from '../services/userService';
@@ -14,6 +14,7 @@ export const Login = () => {
     password: '',
     rememberMe: true,
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
@@ -97,7 +98,7 @@ export const Login = () => {
             <Input
               label="Password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
@@ -105,6 +106,17 @@ export const Login = () => {
               error={touched.password ? errors.password : ''}
               icon={Lock}
               autoComplete="current-password"
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer p-1"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex="-1"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              }
               required
             />
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, User, UserPlus, Phone, ArrowLeft } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, UserPlus, Phone, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { userService } from '../services/userService';
@@ -23,6 +23,8 @@ export const Signup = () => {
     password: '',
     confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
@@ -159,26 +161,48 @@ export const Signup = () => {
             <Input
               label="Password (min 8 characters)"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
               onBlur={handleBlur}
               error={touched.password ? errors.password : ''}
               icon={Lock}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer p-1"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex="-1"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              }
               required
             />
 
             <Input
               label="Confirm Password"
               name="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.confirmPassword}
               onChange={handleChange}
               onBlur={handleBlur}
               error={touched.confirmPassword ? errors.confirmPassword : ''}
               icon={Lock}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer p-1"
+                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  tabIndex="-1"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              }
               required
             />
 
