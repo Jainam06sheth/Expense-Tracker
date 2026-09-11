@@ -1,13 +1,14 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
-  useParams,
-  useNavigate,
-  Link,
-} from 'react-router-dom';
+  ArrowLeft,
+  Trash2,
+  Calendar,
+  Receipt,
+  Users,
+  CreditCard,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { expenseService } from '../services/expenseService';
 import { groupService } from '../services/groupService';
@@ -16,355 +17,305 @@ import { expenseSplitService } from '../services/expenseSplitService';
 import { userService } from '../services/userService';
 
 import { formatCurrency } from '../utils/currencyFormatter';
-import {
-  format,
-  parseISO,
-} from 'date-fns';
-
-import { Avatar } from '../components/common/Avatar';
-import { Button } from '../components/common/Button';
 import { ConfirmModal } from '../components/common/ConfirmModal';
-
-import {
-  ArrowLeft,
-  Calendar,
-  Receipt,
-  Edit3,
-  Trash2,
-} from 'lucide-react';
-
-import toast from 'react-hot-toast';
+import { EmptyState } from '../components/common/EmptyState';
 
 export const ExpenseDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [currentUser, setCurrentUser] =
-    useState(
-      userService.getCurrentUser()
-    );
+  const [expense, setExpense] = useState(null);
+  const [group, setGroup] = useState(null);
+  const [items, setItems] = useState([]);
+  const [splits, setSplits] = useState([]);
+  const [users, setUsers] = useState([]);
 
-  const [expense, setExpense] =
-    useState(null);
-
-  const [group, setGroup] =
-    useState(null);
-
-  const [items, setItems] =
-    useState([]);
-
-  const [splits, setSplits] =
-    useState([]);
-
-  const [users, setUsers] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
+  const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] =
+    useState(false);
+  const [deleting, setDeleting] =
     useState(false);
 
   /*
    * Load expense details
    */
   useEffect(() => {
-    const loadExpenseDetails =
-      async () => {
-        try {
-          setLoading(true);
-
-          /*
-           * Current user
-           */
-          const profileResult =
-            await userService.loadProfile();
-
-          if (
-            profileResult.success &&
-            profileResult.user
-          ) {
-            setCurrentUser(
-              profileResult.user
-            );
-          }
-
-          /*
-           * Expense
-           */
-          const expenseData =
-            await expenseService.getById(id);
-
-          if (!expenseData) {
-            setExpense(null);
-            return;
-          }
-
-          setExpense(expenseData);
-
-          /*
-           * Group
-           */
-          const groupData =
-            await groupService.getById(
-              expenseData.groupId
-            );
-
-          setGroup(groupData);
-
-          /*
-           * Expense Items
-           */
-          try {
-            const itemsData =
-              await expenseItemService.getByExpense(
-                id
-              );
-
-            setItems(
-              itemsData || []
-            );
-          } catch (error) {
-            console.error(
-              'Unable to load expense items:',
-              error
-            );
-
-            setItems([]);
-          }
-
-          /*
-           * Expense Splits
-           */
-          try {
-            const splitsData =
-              await expenseSplitService.getByExpense(
-                id
-              );
-
-            setSplits(
-              splitsData || []
-            );
-          } catch (error) {
-            console.error(
-              'Unable to load expense splits:',
-              error
-            );
-
-            setSplits([]);
-          }
-
-          /*
-           * Get group members.
-           *
-           * We don't have GET /api/users, so users are
-           * collected from the group members endpoint.
-           */
-          try {
-            const members =
-              await groupService.getMembers(
-                expenseData.groupId
-              );
-
-            const userMap =
-              new Map();
-
-            if (
-              profileResult.success &&
-              profileResult.user
-            ) {
-              userMap.set(
-                String(
-                  profileResult.user.id
-                ),
-                profileResult.user
-              );
-            }
-
-            (members || []).forEach(
-              (member) => {
-                const memberUser =
-                  member.user ||
-                  member;
-
-                const memberId =
-                  memberUser.id ||
-                  memberUser._id ||
-                  member.userId;
-
-                if (!memberId) {
-                  return;
-                }
-
-                userMap.set(
-                  String(memberId),
-                  {
-                    ...memberUser,
-                    id: memberId,
-                    _id: memberId,
-                    name:
-                      memberUser.name ||
-                      member.name ||
-                      'Member',
-                    email:
-                      memberUser.email ||
-                      member.email ||
-                      '',
-                  }
-                );
-              }
-            );
-
-            setUsers(
-              Array.from(
-                userMap.values()
-              )
-            );
-          } catch (error) {
-            console.error(
-              'Unable to load group members:',
-              error
-            );
-
-            setUsers([]);
-          }
-        } catch (error) {
-          console.error(
-            'Error loading expense details:',
-            error
-          );
-
-          toast.error(
-            error.message ||
-              'Unable to load expense'
-          );
-        } finally {
-          setLoading(false);
-        }
-      };
-
-    if (id) {
-      loadExpenseDetails();
-    }
-  }, [id]);
-
-  /*
-   * Users lookup map
-   */
-  const usersMap = useMemo(() => {
-    const map = {};
-
-    users.forEach((user) => {
-      const userId =
-        user.id ||
-        user._id;
-
-      if (userId) {
-        map[userId] = {
-          ...user,
-          id: userId,
-        };
-      }
-    });
-
-    return map;
-  }, [users]);
-
-  /*
-   * Payer
-   */
-  const payer =
-    usersMap[
-      expense?.paidBy
-    ] || {
-      name: 'Member',
-    };
-
-  /*
-   * Date
-   */
-  let displayDate = 'Recently';
-
-  if (expense?.date) {
-    try {
-      displayDate = format(
-        parseISO(
-          expense.date
-        ),
-        'EEEE, dd MMMM yyyy'
-      );
-    } catch {
-      displayDate =
-        expense.date;
-    }
-  }
-
-  /*
-   * Delete Expense
-   */
-  const handleDelete =
-    async () => {
-      if (!expense) {
-        return;
-      }
-
+    const loadExpenseDetails = async () => {
       try {
-        const expenseId =
-          expense.id ||
-          expense._id;
+        setLoading(true);
 
-        const result =
-          await expenseService.delete(
-            expenseId
+        /*
+         * Load current user/profile
+         */
+        const profileResult =
+          await userService.loadProfile();
+
+        /*
+         * Load expense
+         */
+        const expenseData =
+          await expenseService.getById(id);
+
+        if (!expenseData) {
+          throw new Error(
+            'Expense not found'
           );
-
-        if (!result.success) {
-          toast.error(
-            result.message ||
-              'Unable to delete expense'
-          );
-
-          return;
         }
 
-        toast.success(
-          'Expense deleted successfully'
+        setExpense(expenseData);
+
+        /*
+         * Get group ID
+         */
+        const groupId =
+          expenseData.groupId?._id ||
+          expenseData.groupId ||
+          expenseData.group?.id ||
+          expenseData.group?._id;
+
+        if (!groupId) {
+          throw new Error(
+            'Group information is missing from this expense'
+          );
+        }
+
+        /*
+         * Load group
+         */
+        const groupData =
+          await groupService.getById(
+            groupId
+          );
+
+        setGroup(groupData);
+
+        /*
+         * Load expense items
+         */
+        const expenseItems =
+          await expenseItemService.getByExpense(
+            id
+          );
+
+        setItems(
+          expenseItems || []
         );
 
-        navigate(
-          group
-            ? `/groups/${
-                group.id ||
-                group._id
-              }`
-            : '/expenses'
+        /*
+         * Load expense splits
+         */
+        const expenseSplits =
+          await expenseSplitService.getByExpense(
+            id
+          );
+
+        setSplits(
+          expenseSplits || []
+        );
+
+        /*
+         * Load group members
+         *
+         * Backend stores members separately
+         * in GroupMember collection.
+         */
+        const members =
+          await groupService.getMembers(
+            groupId
+          );
+
+        /*
+         * Build users list from group members
+         */
+        const usersMap = new Map();
+
+        /*
+         * Add logged-in user
+         */
+        if (
+          profileResult.success &&
+          profileResult.user
+        ) {
+          const currentUser =
+            profileResult.user;
+
+          const currentUserId =
+            currentUser.id ||
+            currentUser._id;
+
+          if (currentUserId) {
+            usersMap.set(
+              String(currentUserId),
+              currentUser
+            );
+          }
+        }
+
+        /*
+         * Add group members
+         */
+        (members || []).forEach(
+          (member) => {
+            const memberUser =
+              member.user ||
+              member;
+
+            const memberId =
+              memberUser.id ||
+              memberUser._id ||
+              member.userId;
+
+            if (!memberId) {
+              return;
+            }
+
+            usersMap.set(
+              String(memberId),
+              {
+                ...memberUser,
+                id: memberId,
+                _id: memberId,
+                name:
+                  memberUser.name ||
+                  member.name ||
+                  'Member',
+                email:
+                  memberUser.email ||
+                  member.email ||
+                  '',
+              }
+            );
+          }
+        );
+
+        setUsers(
+          Array.from(
+            usersMap.values()
+          )
         );
       } catch (error) {
         console.error(
-          'Error deleting expense:',
+          'Unable to load expense details:',
           error
         );
 
         toast.error(
           error.message ||
-            'Unable to delete expense'
+            'Unable to load expense'
         );
+
+        /*
+         * If expense cannot be loaded,
+         * return to expenses page.
+         */
+        navigate('/expenses');
       } finally {
-        setDeleteModalOpen(
-          false
-        );
+        setLoading(false);
       }
     };
 
+    if (id) {
+      loadExpenseDetails();
+    }
+  }, [id, navigate]);
+
   /*
-   * Loading
+   * Find user by ID
+   */
+  const getUser = (userId) => {
+    if (!userId) {
+      return null;
+    }
+
+    const normalizedId =
+      userId?._id ||
+      userId?.id ||
+      userId;
+
+    return (
+      users.find(
+        (user) =>
+          String(
+            user.id ||
+              user._id
+          ) ===
+          String(normalizedId)
+      ) || null
+    );
+  };
+
+  /*
+   * Delete expense
+   */
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+
+      await expenseService.delete(
+        id
+      );
+
+      toast.success(
+        'Expense deleted successfully!'
+      );
+
+      setDeleteModalOpen(false);
+
+      /*
+       * Return to group if available,
+       * otherwise expenses page.
+       */
+      if (group) {
+        const groupId =
+          group.id ||
+          group._id;
+
+        if (groupId) {
+          navigate(
+            `/groups/${groupId}`
+          );
+
+          return;
+        }
+      }
+
+      navigate('/expenses');
+    } catch (error) {
+      console.error(
+        'Unable to delete expense:',
+        error
+      );
+
+      toast.error(
+        error.message ||
+          'Unable to delete expense'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  /*
+   * Loading state
    */
   if (loading) {
     return (
-      <div className="text-center py-16">
-        <p className="text-sm text-slate-500">
-          Loading expense...
-        </p>
+      <div className="space-y-6 pb-12">
+        <button
+          onClick={() =>
+            navigate(-1)
+          }
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-10 shadow-xs text-center">
+          <p className="text-sm text-slate-500">
+            Loading expense details...
+          </p>
+        </div>
       </div>
     );
   }
@@ -374,197 +325,254 @@ export const ExpenseDetails = () => {
    */
   if (!expense) {
     return (
-      <div className="text-center py-16">
-        <h3 className="text-lg font-bold text-slate-800">
-          Expense not found
-        </h3>
-
-        <Button
+      <div className="space-y-6 pb-12">
+        <button
           onClick={() =>
-            navigate('/expenses')
-          }
-          className="mt-4"
-        >
-          Back to Expenses
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6 pb-12 max-w-4xl mx-auto">
-      {/* Header breadcrumb & actions */}
-      <div className="flex items-center justify-between">
-        <Link
-          to={
-            group
-              ? `/groups/${
-                  group.id ||
-                  group._id
-                }`
-              : '/expenses'
+            navigate(-1)
           }
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
 
-          <span>
-            {group
-              ? `Back to ${group.name}`
-              : 'Back to Expenses'}
-          </span>
-        </Link>
+        <EmptyState
+          icon={Receipt}
+          title="Expense not found"
+          description="This expense does not exist or you do not have access to it."
+        />
+      </div>
+    );
+  }
 
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            icon={Edit3}
-            onClick={() =>
-              navigate(
-                `/expenses/add?editId=${
-                  expense.id ||
-                  expense._id
-                }`
-              )
-            }
-          >
-            Edit
-          </Button>
+  /*
+   * Expense values
+   */
+  const expenseName =
+    expense.name ||
+    'Expense';
 
-          <Button
-            size="sm"
-            variant="danger"
-            icon={Trash2}
-            onClick={() =>
-              setDeleteModalOpen(
-                true
-              )
-            }
-          >
-            Delete
-          </Button>
-        </div>
+  const expenseAmount =
+    Number(
+      expense.amount
+    ) || 0;
+
+  const paidById =
+    expense.paidBy?._id ||
+    expense.paidBy?.id ||
+    expense.paidBy;
+
+  const paidBy =
+    getUser(paidById);
+
+  const expenseDate =
+    expense.date ||
+    expense.createdAt;
+
+  /*
+   * Split total
+   */
+  const splitTotal =
+    splits.reduce(
+      (total, split) =>
+        total +
+        (Number(
+          split.shareAmount
+        ) || 0),
+      0
+    );
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <button
+          onClick={() =>
+            navigate(-1)
+          }
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+
+        <button
+          onClick={() =>
+            setDeleteModalOpen(true)
+          }
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete Expense
+        </button>
       </div>
 
-      {/* Hero Banner */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl">
-              <Receipt className="w-7 h-7" />
-            </div>
-
+      {/* Expense Header */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">
-                  {expense.category}
-                </span>
-
-                <span className="text-xs font-semibold text-slate-500">
-                  in{' '}
-                  {group?.name ||
-                    'Personal'}
-                </span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                {expense.name}
-              </h2>
-
-              <div className="flex items-center gap-2 text-xs text-slate-400 mt-1.5">
-                <Calendar className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-600 mb-2">
+                <Receipt className="w-4 h-4" />
 
                 <span>
-                  {displayDate}
+                  {group?.name ||
+                    'Group'}
                 </span>
-
-                {expense.notes && (
-                  <>
-                    <span>•</span>
-
-                    <span>
-                      {expense.notes}
-                    </span>
-                  </>
-                )}
               </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {expenseName}
+              </h2>
+
+              {expense.category && (
+                <span className="inline-block mt-2 px-2.5 py-1 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">
+                  {expense.category}
+                </span>
+              )}
+            </div>
+
+            <div className="text-left sm:text-right">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Total Amount
+              </p>
+
+              <p className="text-3xl sm:text-4xl font-black text-slate-900 mt-1">
+                {formatCurrency(
+                  expenseAmount
+                )}
+              </p>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 sm:text-right">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Total Amount
-            </span>
+          {/* Expense Meta */}
+          <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-slate-100">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Calendar className="w-4 h-4" />
 
-            <span className="text-2xl sm:text-3xl font-black text-slate-900 mt-0.5 block">
-              {formatCurrency(
-                expense.amount
-              )}
-            </span>
+              <span>
+                {expenseDate
+                  ? new Date(
+                      expenseDate
+                    ).toLocaleDateString(
+                      'en-IN',
+                      {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      }
+                    )
+                  : 'No date'}
+              </span>
+            </div>
 
-            <span className="text-xs font-medium text-slate-500 mt-1 block">
-              Paid by{' '}
-              <strong className="text-slate-800">
-                {payer.name}
-              </strong>
-            </span>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <CreditCard className="w-4 h-4" />
+
+              <span>
+                Paid by{' '}
+                <strong className="text-slate-700">
+                  {paidBy?.name ||
+                    'Unknown user'}
+                </strong>
+              </span>
+            </div>
+
+            {expense.splitMethod && (
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Users className="w-4 h-4" />
+
+                <span>
+                  Split:{' '}
+                  <strong className="text-slate-700">
+                    {
+                      expense.splitMethod
+                    }
+                  </strong>
+                </span>
+              </div>
+            )}
           </div>
+
+          {expense.notes && (
+            <div className="mt-6 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <p className="text-xs font-bold text-slate-500 mb-1">
+                Notes
+              </p>
+
+              <p className="text-sm text-slate-700">
+                {expense.notes}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Items Breakdown */}
+      {/* Items */}
       {items.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-          <h3 className="text-base font-bold text-slate-900 mb-4">
-            Line Items ({items.length})
-          </h3>
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Line Items
+              </h3>
 
-          <div className="divide-y divide-slate-100">
+              <p className="text-xs text-slate-400 mt-1">
+                Items included in this expense
+              </p>
+            </div>
+
+            <span className="text-xs font-bold text-slate-500">
+              {items.length}{' '}
+              {items.length === 1
+                ? 'item'
+                : 'items'}
+            </span>
+          </div>
+
+          <div className="space-y-3">
             {items.map(
-              (item, index) => {
-                const participants =
-                  item.participantIds ||
-                  item.participants ||
-                  [];
+              (item) => {
+                const itemId =
+                  item.id ||
+                  item._id;
 
                 return (
                   <div
-                    key={
-                      item.id ||
-                      item._id ||
-                      index
-                    }
-                    className="py-3 flex items-center justify-between hover:bg-slate-50/50 px-2 rounded-xl text-sm"
+                    key={itemId}
+                    className="flex items-center justify-between gap-4 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100"
                   >
                     <div>
-                      <span className="font-semibold text-slate-800">
+                      <p className="text-sm font-bold text-slate-800">
                         {item.name}
-                      </span>
-
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Participants:{' '}
-
-                        {participants
-                          .map(
-                            (
-                              participantId
-                            ) =>
-                              usersMap[
-                                participantId
-                              ]?.name ||
-                              participantId
-                          )
-                          .join(', ') ||
-                          'All'}
                       </p>
+
+                      {item.participantIds?.length >
+                        0 && (
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          {
+                            item
+                              .participantIds
+                              .length
+                          }{' '}
+                          participant
+                          {item
+                            .participantIds
+                            .length !==
+                          1
+                            ? 's'
+                            : ''}
+                        </p>
+                      )}
                     </div>
 
-                    <span className="font-bold text-slate-900">
+                    <p className="text-sm font-black text-slate-900">
                       {formatCurrency(
-                        item.amount
+                        Number(
+                          item.amount
+                        ) || 0
                       )}
-                    </span>
+                    </p>
                   </div>
                 );
               }
@@ -573,122 +581,140 @@ export const ExpenseDetails = () => {
         </div>
       )}
 
-      {/* Member Splits Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-        <h3 className="text-base font-bold text-slate-900 mb-4">
-          Individual Contributions & Splits
-        </h3>
+      {/* Splits */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">
+              Member Splits
+            </h3>
 
-        <div className="divide-y divide-slate-100">
-          {splits.length === 0 ? (
-            <p className="text-center py-6 text-xs text-slate-400">
-              No split information available.
+            <p className="text-xs text-slate-400 mt-1">
+              How the expense is divided
             </p>
-          ) : (
-            splits.map(
-              (split, index) => {
-                const userId =
-                  split.userId ||
-                  split.user?.id ||
-                  split.user?._id;
+          </div>
+
+          <span className="text-xs font-bold text-slate-500">
+            {splits.length}{' '}
+            {splits.length === 1
+              ? 'member'
+              : 'members'}
+          </span>
+        </div>
+
+        {splits.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No splits found"
+            description="No member split information is available for this expense."
+          />
+        ) : (
+          <div className="space-y-3">
+            {splits.map(
+              (split) => {
+                const splitId =
+                  split.id ||
+                  split._id;
 
                 const user =
-                  usersMap[
-                    userId
-                  ] || {
-                    name:
-                      split.user?.name ||
-                      userId ||
-                      'Member',
-                    email:
-                      split.user?.email ||
-                      '',
-                  };
-
-                const share =
-                  split.shareAmount ??
-                  split.amount ??
-                  0;
-
-                const isPayer =
-                  String(userId) ===
-                  String(
-                    expense.paidBy
+                  getUser(
+                    split.userId
                   );
 
                 return (
                   <div
-                    key={
-                      split.id ||
-                      split._id ||
-                      index
-                    }
-                    className="py-3.5 flex items-center justify-between px-2 hover:bg-slate-50/50 rounded-xl"
+                    key={splitId}
+                    className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 border border-slate-100"
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar
-                        name={
-                          user.name
-                        }
-                        size="sm"
-                      />
+                      <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-black text-indigo-600">
+                        {(
+                          user?.name ||
+                          'U'
+                        )
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
 
                       <div>
-                        <span className="text-sm font-bold text-slate-900 block">
-                          {user.name}{' '}
-                          {isPayer && (
-                            <span className="text-blue-600">
-                              (Payer)
-                            </span>
-                          )}
-                        </span>
+                        <p className="text-sm font-bold text-slate-800">
+                          {user?.name ||
+                            'Unknown user'}
+                        </p>
 
-                        <span className="text-xs text-slate-400">
-                          {user.email}
-                        </span>
+                        <p className="text-[11px] text-slate-400">
+                          {user?.email ||
+                            ''}
+                        </p>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-base font-black text-slate-900 block">
+                      <p className="text-sm font-black text-slate-900">
                         {formatCurrency(
-                          share
+                          Number(
+                            split.shareAmount
+                          ) || 0
                         )}
-                      </span>
+                      </p>
 
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        {Math.round(
-                          ((Number(
-                            share
-                          ) || 0) /
-                            (Number(
-                              expense.amount
-                            ) || 1)) *
-                            100
-                        )}
-                        % of total
+                      <span
+                        className={`text-[10px] font-bold ${
+                          split.status ===
+                          'paid'
+                            ? 'text-emerald-600'
+                            : 'text-amber-600'
+                        }`}
+                      >
+                        {split.status ===
+                        'paid'
+                          ? 'Paid'
+                          : 'Pending'}
                       </span>
                     </div>
                   </div>
                 );
               }
-            )
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {splits.length > 0 && (
+          <div className="flex items-center justify-between mt-5 pt-5 border-t border-slate-100">
+            <span className="text-xs font-bold text-slate-500">
+              Split Total
+            </span>
+
+            <span className="text-sm font-black text-slate-900">
+              {formatCurrency(
+                splitTotal
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* Delete Confirmation */}
       <ConfirmModal
-        isOpen={deleteModalOpen}
+        isOpen={
+          deleteModalOpen
+        }
         onClose={() =>
           setDeleteModalOpen(
             false
           )
         }
-        onConfirm={handleDelete}
-        title="Delete Expense?"
-        message={`Are you sure you want to permanently delete "${expense.name}"? Group balances will be updated immediately.`}
-        confirmText="Delete"
+        onConfirm={
+          handleDelete
+        }
+        title="Delete Expense"
+        description="Are you sure you want to delete this expense? This action cannot be undone."
+        confirmText={
+          deleting
+            ? 'Deleting...'
+            : 'Delete'
+        }
+        danger
       />
     </div>
   );

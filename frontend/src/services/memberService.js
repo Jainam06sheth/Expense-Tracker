@@ -1,140 +1,189 @@
-import { getData, setData } from '../utils/storage';
-import { STORAGE_KEYS } from '../constants/storageKeys';
-import { activityService } from './activityService';
+import { api } from './api';
+
+const normalizeMember = (
+  member = null
+) => {
+  if (!member) return null;
+
+  const user =
+    member.user || member;
+
+  const id =
+    user._id ||
+    user.id ||
+    member.userId;
+
+  return {
+    ...member,
+
+    id,
+    _id: id,
+    userId: id,
+
+    name:
+      user.name ||
+      member.name ||
+      'Member',
+
+    email:
+      user.email ||
+      member.email ||
+      '',
+
+    role:
+      member.role ||
+      'member',
+
+    status:
+      member.status ||
+      'active',
+
+    joinedAt:
+      member.joinedAt ||
+      null,
+  };
+};
+
+const extractMembers = (
+  response
+) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (
+    Array.isArray(
+      response.members
+    )
+  ) {
+    return response.members;
+  }
+
+  return [];
+};
 
 export const memberService = {
-  getByGroupId: (groupId) => {
-    const groups = getData(STORAGE_KEYS.GROUPS, []);
-    const group = groups.find((g) => g.id === groupId);
-    return group ? group.members || [] : [];
-  },
-
-  create: (groupId, memberData, currentUser) => {
-    const groups = getData(STORAGE_KEYS.GROUPS, []);
-    let addedMember = null;
-
-    const updatedGroups = groups.map((g) => {
-      if (g.id === groupId) {
-        const members = g.members || [];
-        // Prevent duplicate member by email
-        const exists = members.some(
-          (m) => m.email?.toLowerCase().trim() === memberData.email?.toLowerCase().trim()
+  /*
+   * Get all members of a group
+   */
+  getByGroupId: async (
+    groupId
+  ) => {
+    try {
+      const response =
+        await api.request(
+          `/groups/${groupId}/members`
         );
-        if (exists) {
-          throw new Error('A member with this email already exists in this group');
-        }
 
-        addedMember = {
-          id: memberData.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? `user-${crypto.randomUUID()}` : `user-${Date.now()}`),
-          name: memberData.name.trim(),
-          email: memberData.email.trim(),
-          role: memberData.role || 'member',
-          status: 'active',
-        };
-
-        return { ...g, members: [...members, addedMember] };
-      }
-      return g;
-    });
-
-    if (addedMember) {
-      setData(STORAGE_KEYS.GROUPS, updatedGroups);
-      const group = groups.find((g) => g.id === groupId);
-
-      activityService.create({
-        type: 'member_added',
-        description: `${currentUser?.name || 'User'} added ${addedMember.name} to "${group?.name}"`,
-        userId: currentUser?.id || 'unknown',
-        userName: currentUser?.name || 'User',
-        groupId: groupId,
-        groupName: group?.name || 'Group',
-        entityId: addedMember.id,
-        entityType: 'member',
-      });
-    }
-
-    return addedMember;
-  },
-
-  update: (groupId, memberId, updates, currentUser) => {
-    const groups = getData(STORAGE_KEYS.GROUPS, []);
-    let updatedMember = null;
-
-    const updatedGroups = groups.map((g) => {
-      if (g.id === groupId) {
-        const members = (g.members || []).map((m) => {
-          if (m.id === memberId) {
-            updatedMember = { ...m, ...updates };
-            return updatedMember;
-          }
-          return m;
-        });
-        return { ...g, members };
-      }
-      return g;
-    });
-
-    if (updatedMember) {
-      setData(STORAGE_KEYS.GROUPS, updatedGroups);
-      const group = groups.find((g) => g.id === groupId);
-
-      activityService.create({
-        type: 'member_updated',
-        description: `${currentUser?.name || 'User'} updated member details for ${updatedMember.name}`,
-        userId: currentUser?.id || 'unknown',
-        userName: currentUser?.name || 'User',
-        groupId: groupId,
-        groupName: group?.name || 'Group',
-        entityId: updatedMember.id,
-        entityType: 'member',
-      });
-    }
-
-    return updatedMember;
-  },
-
-  delete: (groupId, memberId, currentUser) => {
-    const groups = getData(STORAGE_KEYS.GROUPS, []);
-    let removedMember = null;
-
-    // Check if member has active expense contributions to prevent breaking history
-    const expenses = getData(STORAGE_KEYS.EXPENSES, []);
-    const groupExpenses = expenses.filter((e) => e.groupId === groupId);
-    const hasActiveExpenses = groupExpenses.some(
-      (e) => e.paidBy === memberId || (e.splits && e.splits[memberId] > 0)
-    );
-
-    if (hasActiveExpenses) {
+      return extractMembers(
+        response
+      ).map(
+        normalizeMember
+      );
+    } catch (error) {
       throw new Error(
-        'Cannot remove member because they have associated expenses or splits. Settle debts or mark inactive instead.'
+        error.message ||
+          'Unable to load group members'
       );
     }
+  },
 
-    const updatedGroups = groups.map((g) => {
-      if (g.id === groupId) {
-        removedMember = (g.members || []).find((m) => m.id === memberId);
-        const members = (g.members || []).filter((m) => m.id !== memberId);
-        return { ...g, members };
+  /*
+   * Add a member
+   *
+   * Backend uses invitations,
+   * so this creates an invitation
+   * instead of directly adding
+   * the user to GroupMember.
+   */
+  create: async (
+    groupId,
+    memberData
+  ) => {
+    try {
+      const payload = {
+        groupId,
+
+        /*
+         * Depending on your AddMemberModal,
+         * memberData may contain either
+         * userId or id.
+         */
+        invitedUser:
+          memberData.invitedUser ||
+          memberData.userId ||
+          memberData.id,
+      };
+
+      if (!payload.invitedUser) {
+        throw new Error(
+          'User ID is required to send an invitation'
+        );
       }
-      return g;
-    });
 
-    if (removedMember) {
-      setData(STORAGE_KEYS.GROUPS, updatedGroups);
-      const group = groups.find((g) => g.id === groupId);
+      const response =
+        await api.request(
+          '/invitations',
+          {
+            method: 'POST',
+            body: payload,
+          }
+        );
 
-      activityService.create({
-        type: 'member_removed',
-        description: `${currentUser?.name || 'User'} removed ${removedMember.name} from "${group?.name}"`,
-        userId: currentUser?.id || 'unknown',
-        userName: currentUser?.name || 'User',
-        groupId: groupId,
-        groupName: group?.name || 'Group',
-        entityId: memberId,
-        entityType: 'member',
-      });
+      return (
+        response.data ||
+        response.invitation ||
+        response
+      );
+    } catch (error) {
+      throw new Error(
+        error.message ||
+          'Unable to send member invitation'
+      );
     }
+  },
 
-    return true;
+  /*
+   * Update member
+   *
+   * There is currently NO backend
+   * endpoint for updating a member.
+   */
+  update: async () => {
+    throw new Error(
+      'Updating group members is not supported by the backend yet.'
+    );
+  },
+
+  /*
+   * Remove member from group
+   */
+  delete: async (
+    groupId,
+    memberId
+  ) => {
+    try {
+      const response =
+        await api.request(
+          `/groups/${groupId}/member/${memberId}`,
+          {
+            method: 'DELETE',
+          }
+        );
+
+      return (
+        response.data ||
+        response
+      );
+    } catch (error) {
+      throw new Error(
+        error.message ||
+          'Unable to remove member'
+      );
+    }
   },
 };

@@ -1,123 +1,162 @@
-import { activityService } from './activityService';
-import { api } from './api';
+import { api } from "./api";
+
+const normalizeExpense = (
+  expense = null
+) => {
+  if (!expense) return null;
+
+  const id =
+    expense._id ||
+    expense.id;
+
+  return {
+    ...expense,
+
+    id,
+    _id: id,
+
+    groupId:
+      expense.groupId?._id ||
+      expense.groupId,
+
+    paidBy:
+      expense.paidBy?._id ||
+      expense.paidBy,
+
+    items:
+      expense.items || [],
+
+    splits:
+      expense.splits || [],
+  };
+};
+
+const extractArray = (
+  response
+) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (
+    Array.isArray(
+      response.expenses
+    )
+  ) {
+    return response.expenses;
+  }
+
+  return [];
+};
 
 export const expenseService = {
-  getAll: async () => {
-    // Note: Backend does not have a global expenses endpoint.
-    // We might need to fetch from all groups the user is in, but that's heavy.
-    // Alternatively, we can remove this method if it's not used, or return an empty array.
-    // Let's check if it's used in the frontend. If not used, we can return [].
-    // For now, we return an empty array and log a warning.
-    console.warn('ExpenseService.getAll() is called but there is no backend endpoint for global expenses. Returning empty array.');
-    return [];
+  getByGroup: async (
+    groupId
+  ) => {
+    const response =
+      await api.request(
+        `/expenses/group/${groupId}`
+      );
+
+    return extractArray(
+      response
+    ).map(
+      normalizeExpense
+    );
   },
 
-  getById: async (id) => {
-    try {
-      const response = await api.request(`/expenses/${id}`);
-      // Backend returns the expense object, we need to ensure it has an `id` field (MongoDB uses _id)
-      const expense = response.data;
-      if (expense) {
-        // Ensure the expense has an `id` field for frontend compatibility
-        expense.id = expense._id;
+  getByGroupId: async (
+    groupId
+  ) => {
+    return expenseService.getByGroup(
+      groupId
+    );
+  },
+
+  getById: async (
+    expenseId
+  ) => {
+    const response =
+      await api.request(
+        `/expenses/${expenseId}`
+      );
+
+    return normalizeExpense(
+      response.data ||
+        response.expense ||
+        response
+    );
+  },
+
+  create: async (
+    payload
+  ) => {
+    const {
+      items,
+      splits,
+      ...expenseData
+    } = payload;
+
+    /*
+     * Create main Expense first.
+     */
+    const response =
+      await api.request(
+        "/expenses",
+        {
+          method: "POST",
+          body: expenseData,
+        }
+      );
+
+    const expense =
+      normalizeExpense(
+        response.data ||
+          response.expense ||
+          response
+      );
+
+    return expense;
+  },
+
+  update: async (
+    expenseId,
+    payload
+  ) => {
+    const {
+      items,
+      splits,
+      ...expenseData
+    } = payload;
+
+    const response =
+      await api.request(
+        `/expenses/${expenseId}`,
+        {
+          method: "PUT",
+          body: expenseData,
+        }
+      );
+
+    return normalizeExpense(
+      response.data ||
+        response.expense ||
+        response
+    );
+  },
+
+  delete: async (
+    expenseId
+  ) => {
+    return api.request(
+      `/expenses/${expenseId}`,
+      {
+        method: "DELETE",
       }
-      return expense;
-    } catch (error) {
-      console.error(`Error fetching expense with id ${id}:`, error);
-      return null;
-    }
+    );
   },
-
-  getByGroupId: async (groupId) => {
-    try {
-      const response = await api.request(`/expenses/group/${groupId}`);
-      const expenses = response.data || [];
-      // Ensure each expense has an `id` field
-      return expenses.map(exp => {
-        exp.id = exp._id;
-        return exp;
-      });
-    } catch (error) {
-      console.error(`Error fetching expenses for group ${groupId}:`, error);
-      return [];
-    }
-  },
-
-  create: async (data, currentUser) => {
-    try {
-      // Prepare the payload for the backend
-      // The backend expects: name, groupId, category, amount, paidBy, date, notes, splitMethod, items, participants, splits
-      // Note: The backend's expense controller may expect different field names, we assume it matches the frontend's current localStorage structure.
-      const payload = {
-        name: data.name,
-        groupId: data.groupId,
-        category: data.category || 'Other',
-        amount: Number(data.amount),
-        paidBy: data.paidBy,
-        date: data.date || new Date().toISOString(),
-        notes: data.notes || '',
-        splitMethod: data.splitMethod || 'equal',
-        items: data.items || [],
-        participants: data.participants || [],
-        splits: data.splits || {},
-      };
-
-      const response = await api.request('/expenses', {
-        method: 'POST',
-        body: payload,
-      });
-
-      const expense = response.data;
-      if (expense) {
-        expense.id = expense._id;
-      }
-
-      // We do not create activity here because the backend should do it when the expense is created.
-      // However, if the backend does not create an activity for expense creation, we might need to.
-      // Let's assume the backend does it (as per the group creation example).
-
-      return expense;
-    } catch (error) {
-      console.error('Error creating expense:', error);
-      throw error;
-    }
-  },
-
-  update: async (id, updates, currentUser) => {
-    try {
-      const payload = {
-        ...updates,
-        amount: updates.amount !== undefined ? Number(updates.amount) : undefined,
-      };
-
-      const response = await api.request(`/expenses/${id}`, {
-        method: 'PUT',
-        body: payload,
-      });
-
-      const expense = response.data;
-      if (expense) {
-        expense.id = expense._id;
-      }
-
-      // Backend should handle activity creation for updates
-      return expense;
-    } catch (error) {
-      console.error(`Error updating expense with id ${id}:`, error);
-      throw error;
-    }
-  },
-
-  delete: async (id, currentUser) => {
-    try {
-      const response = await api.request(`/expenses/${id}`, {
-        method: 'DELETE',
-      });
-      // Backend should handle activity creation for deletion
-      return response.data;
-    } catch (error) {
-      console.error(`Error deleting expense with id ${id}:`, error);
-      throw error;
-    }
-  }
 };

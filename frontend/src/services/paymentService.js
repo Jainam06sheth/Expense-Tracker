@@ -1,87 +1,146 @@
-import { getData, setData } from '../utils/storage';
-import { STORAGE_KEYS } from '../constants/storageKeys';
-import { activityService } from './activityService';
+import { api } from "./api";
+
+const normalizePayment = (
+  payment = null
+) => {
+  if (!payment) return null;
+
+  const id =
+    payment._id ||
+    payment.id;
+
+  return {
+    ...payment,
+
+    id,
+    _id: id,
+
+    groupId:
+      payment.groupId?._id ||
+      payment.groupId,
+
+    fromUser:
+      payment.fromUser?._id ||
+      payment.fromUser,
+
+    toUser:
+      payment.toUser?._id ||
+      payment.toUser,
+
+    amount:
+      Number(
+        payment.amount
+      ) || 0,
+
+    status:
+      payment.status ||
+      "pending",
+  };
+};
+
+const extractPayments = (
+  response
+) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (
+    Array.isArray(
+      response.payments
+    )
+  ) {
+    return response.payments;
+  }
+
+  return [];
+};
 
 export const paymentService = {
-  getAll: () => {
-    return getData(STORAGE_KEYS.PAYMENTS, []);
+  create: async (
+    paymentData
+  ) => {
+    const response =
+      await api.request(
+        "/payments",
+        {
+          method: "POST",
+          body: paymentData,
+        }
+      );
+
+    return normalizePayment(
+      response.data ||
+        response.payment ||
+        response
+    );
   },
 
-  getById: (id) => {
-    const payments = getData(STORAGE_KEYS.PAYMENTS, []);
-    return payments.find((p) => p.id === id) || null;
+  getMine: async () => {
+    const response =
+      await api.request(
+        "/payments/me"
+      );
+
+    return extractPayments(
+      response
+    ).map(
+      normalizePayment
+    );
   },
 
-  create: (data, currentUser) => {
-    const payments = getData(STORAGE_KEYS.PAYMENTS, []);
-    const newPayment = {
-      id: typeof crypto !== 'undefined' && crypto.randomUUID ? `pay-${crypto.randomUUID()}` : `pay-${Date.now()}`,
-      groupId: data.groupId,
-      fromUser: data.fromUser,
-      toUser: data.toUser,
-      amount: Number(data.amount),
-      date: data.date || new Date().toISOString(),
-      status: data.status || 'paid', // Default to simulated instant paid
-      notes: data.notes || 'Simulated payment',
-      reference: `SIM-PAY-${Math.floor(100000 + Math.random() * 900000)}`,
-      createdAt: new Date().toISOString(),
-    };
+  getByGroup: async (
+    groupId
+  ) => {
+    const response =
+      await api.request(
+        `/payments/group/${groupId}`
+      );
 
-    const updated = [newPayment, ...payments];
-    setData(STORAGE_KEYS.PAYMENTS, updated);
-
-    // Activity
-    const users = getData(STORAGE_KEYS.USERS, []);
-    const fromMember = users.find((u) => u.id === data.fromUser) || { name: 'Member' };
-    const toMember = users.find((u) => u.id === data.toUser) || { name: 'Member' };
-
-    activityService.create({
-      type: 'payment_completed',
-      description: `${fromMember.name} paid ${toMember.name} ₹${newPayment.amount}`,
-      userId: currentUser?.id || data.fromUser,
-      userName: currentUser?.name || fromMember.name,
-      groupId: data.groupId,
-      entityId: newPayment.id,
-      entityType: 'payment',
-    });
-
-    return newPayment;
+    return extractPayments(
+      response
+    ).map(
+      normalizePayment
+    );
   },
 
-  update: (id, updates, currentUser) => {
-    const payments = getData(STORAGE_KEYS.PAYMENTS, []);
-    let updatedPayment = null;
+  complete: async (
+    paymentId
+  ) => {
+    const response =
+      await api.request(
+        `/payments/${paymentId}/complete`,
+        {
+          method: "PUT",
+        }
+      );
 
-    const updated = payments.map((p) => {
-      if (p.id === id) {
-        updatedPayment = { ...p, ...updates, updatedAt: new Date().toISOString() };
-        return updatedPayment;
-      }
-      return p;
-    });
-
-    setData(STORAGE_KEYS.PAYMENTS, updated);
-    return updatedPayment;
+    return normalizePayment(
+      response.data ||
+        response.payment ||
+        response
+    );
   },
 
-  delete: (id, currentUser) => {
-    const payments = getData(STORAGE_KEYS.PAYMENTS, []);
-    const toDelete = payments.find((p) => p.id === id);
-    if (!toDelete) return false;
+  reject: async (
+    paymentId
+  ) => {
+    const response =
+      await api.request(
+        `/payments/${paymentId}/reject`,
+        {
+          method: "PUT",
+        }
+      );
 
-    const updated = payments.filter((p) => p.id !== id);
-    setData(STORAGE_KEYS.PAYMENTS, updated);
-
-    activityService.create({
-      type: 'payment_deleted',
-      description: `${currentUser?.name || 'User'} removed settlement record of ₹${toDelete.amount}`,
-      userId: currentUser?.id || 'unknown',
-      userName: currentUser?.name || 'User',
-      groupId: toDelete.groupId,
-      entityId: toDelete.id,
-      entityType: 'payment',
-    });
-
-    return true;
+    return normalizePayment(
+      response.data ||
+        response.payment ||
+        response
+    );
   },
 };

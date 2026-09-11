@@ -1,130 +1,170 @@
-import { activityService } from './activityService';
-import { api } from './api';
+import { api } from "./api";
+
+const normalizeGroup = (
+  group = null
+) => {
+  if (!group) return null;
+
+  const id =
+    group._id || group.id;
+
+  return {
+    ...group,
+
+    id,
+    _id: id,
+
+    createdBy:
+      group.createdBy?._id ||
+      group.createdBy ||
+      null,
+
+    members:
+      group.members || [],
+  };
+};
+
+const extractData = (
+  response
+) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (
+    Array.isArray(
+      response.groups
+    )
+  ) {
+    return response.groups;
+  }
+
+  return [];
+};
 
 export const groupService = {
   getAll: async () => {
-    try {
-      const response = await api.request('/groups');
-      return response.data || [];
-    } catch (error) {
-      console.error('Error fetching groups:', error);
-      return [];
-    }
+    const response =
+      await api.request(
+        "/groups"
+      );
+
+    return extractData(
+      response
+    ).map(
+      normalizeGroup
+    );
   },
 
-  getById: async (id) => {
-    try {
-      const response = await api.request(`/groups/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching group with id ${id}:`, error);
-      return null;
-    }
+  getById: async (
+    groupId
+  ) => {
+    const response =
+      await api.request(
+        `/groups/${groupId}`
+      );
+
+    return normalizeGroup(
+      response.data ||
+        response.group ||
+        response
+    );
   },
 
-  create: async (data, currentUser) => {
-    try {
-      const payload = {
-        name: data.name,
-        category: data.category,
-        description: data.description,
-      };
+  getMembers: async (
+    groupId
+  ) => {
+    const response =
+      await api.request(
+        `/groups/${groupId}/members`
+      );
 
-      const response = await api.request('/groups', {
-        method: 'POST',
-        body: payload,
-      });
+    const members =
+      extractData(
+        response
+      );
 
-      // The backend creates the group and adds the current user as admin
-      // We don't need to manually create activity here as the backend should do it
-      // However, to maintain existing behavior, we can still create activity if needed
-      // But let's rely on backend activity creation for consistency
+    return members.map(
+      (member) => {
+        const user =
+          member.user ||
+          member;
 
-      return response.data;
-    } catch (error) {
-      console.error('Error creating group:', error);
-      throw error;
-    }
+        const id =
+          user._id ||
+          user.id ||
+          member.userId;
+
+        return {
+          ...member,
+          id,
+          _id: id,
+          userId: id,
+          name:
+            user.name ||
+            member.name ||
+            "Member",
+          email:
+            user.email ||
+            member.email ||
+            "",
+        };
+      }
+    );
   },
 
-  update: async (id, updates, currentUser) => {
-    try {
-      const response = await api.request(`/groups/${id}`, {
-        method: 'PUT',
-        body: updates,
-      });
+  create: async (
+    groupData
+  ) => {
+    const response =
+      await api.request(
+        "/groups",
+        {
+          method: "POST",
+          body: groupData,
+        }
+      );
 
-      // Backend should handle activity creation
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating group with id ${id}:`, error);
-      throw error;
-    }
+    return normalizeGroup(
+      response.data ||
+        response.group ||
+        response
+    );
   },
 
-  // Note: The backend does not have a group deletion endpoint
-  // We'll need to add it or remove this functionality
-  // For now, we'll simulate it by removing from local state
-  // But ideally, we should add DELETE /api/groups/:groupId to backend
-  delete: async (id, currentUser) => {
-    try {
-      // Since backend doesn't support group deletion, we'll need to add that endpoint
-      // For now, we'll throw an error indicating this functionality needs backend support
-      throw new Error('Group deletion is not supported by the backend. Please add DELETE /api/groups/:groupId endpoint.');
+  update: async (
+    groupId,
+    updates
+  ) => {
+    const response =
+      await api.request(
+        `/groups/${groupId}`,
+        {
+          method: "PUT",
+          body: updates,
+        }
+      );
 
-      // Alternatively, if we want to remove it optimistically and sync later:
-      // const response = await api.request(`/groups/${id}`, {
-      //   method: 'DELETE',
-      // });
-      // return response.data;
-    } catch (error) {
-      console.error(`Error deleting group with id ${id}:`, error);
-      throw error;
-    }
+    return normalizeGroup(
+      response.data ||
+        response.group ||
+        response
+    );
   },
 
-  // Additional methods that might be needed based on frontend usage
-  getMembers: async (groupId) => {
-    try {
-      const response = await api.request(`/groups/${groupId}/members`);
-      return response.data || [];
-    } catch (error) {
-      console.error(`Error fetching members for group ${groupId}:`, error);
-      return [];
-    }
+  removeMember: async (
+    groupId,
+    userId
+  ) => {
+    return api.request(
+      `/groups/${groupId}/member/${userId}`,
+      {
+        method: "DELETE",
+      }
+    );
   },
-
-  addMember: async (groupId, memberData, currentUser) => {
-    try {
-      // This would require a backend endpoint like POST /api/groups/:groupId/members
-      // Since it doesn't exist, we'll use the invitation system instead
-      // Or we need to add this endpoint to backend
-      throw new Error('Adding members directly is not supported. Use the invitation system instead.');
-    } catch (error) {
-      console.error(`Error adding member to group ${groupId}:`, error);
-      throw error;
-    }
-  },
-
-  updateMember: async (groupId, memberId, updates, currentUser) => {
-    try {
-      // This would require a backend endpoint like PUT /api/groups/:groupId/members/:memberId
-      throw new Error('Updating members directly is not supported by the backend.');
-    } catch (error) {
-      console.error(`Error updating member in group ${groupId}:`, error);
-      throw error;
-    }
-  },
-
-  removeMember: async (groupId, memberId, currentUser) => {
-    try {
-      const response = await api.request(`/groups/${groupId}/member/${memberId}`, {
-        method: 'DELETE',
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error removing member from group ${groupId}:`, error);
-      throw error;
-    }
-  }
 };

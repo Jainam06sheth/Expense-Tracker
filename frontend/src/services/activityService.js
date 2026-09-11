@@ -1,20 +1,94 @@
-import { getData, setData } from '../utils/storage';
-import { STORAGE_KEYS } from '../constants/storageKeys';
+import { api } from "./api";
+
+const normalizeActivity = (
+  activity = null
+) => {
+  if (!activity) return null;
+
+  const id =
+    activity._id ||
+    activity.id;
+
+  return {
+    ...activity,
+
+    id,
+    _id: id,
+
+    userId:
+      activity.userId?._id ||
+      activity.userId,
+
+    groupId:
+      activity.groupId?._id ||
+      activity.groupId,
+
+    entityId:
+      activity.entityId?._id ||
+      activity.entityId,
+
+    date:
+      activity.date ||
+      activity.createdAt,
+  };
+};
+
+const extractActivities = (
+  response
+) => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (
+    Array.isArray(
+      response.activities
+    )
+  ) {
+    return response.activities;
+  }
+
+  return [];
+};
 
 export const activityService = {
-  getAll: () => {
-    return getData(STORAGE_KEYS.ACTIVITIES, []);
+  getMine: async () => {
+    const response =
+      await api.request(
+        "/activities/me"
+      );
+
+    return extractActivities(
+      response
+    ).map(
+      normalizeActivity
+    );
   },
 
-  create: (activity) => {
-    const activities = getData(STORAGE_KEYS.ACTIVITIES, []);
-    const newActivity = {
-      id: typeof crypto !== 'undefined' && crypto.randomUUID ? `act-${crypto.randomUUID()}` : `act-${Date.now()}`,
-      date: new Date().toISOString(),
-      ...activity,
-    };
-    const updated = [newActivity, ...activities];
-    setData(STORAGE_KEYS.ACTIVITIES, updated);
-    return newActivity;
+  getByGroup: async (
+    groupId
+  ) => {
+    const response =
+      await api.request(
+        `/activities/group/${groupId}`
+      );
+
+    return extractActivities(
+      response
+    ).map(
+      normalizeActivity
+    );
+  },
+
+  /*
+   * Backward-compatible alias
+   * for old frontend code.
+   */
+  getAll: async () => {
+    return activityService.getMine();
   },
 };
