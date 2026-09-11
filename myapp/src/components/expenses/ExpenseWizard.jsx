@@ -273,37 +273,47 @@ export const ExpenseWizard = ({
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
       {/* Stepper Header */}
-      <div className="border-b border-slate-100 bg-slate-50/70 p-4 sm:p-6">
-        <div className="flex items-center justify-between max-w-2xl mx-auto overflow-x-auto pb-2 sm:pb-0">
+      <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-3.5 sm:px-6 sm:py-4">
+        <div className="flex items-center justify-between max-w-2xl mx-auto w-full">
           {STEPS.map((s, idx) => {
             const isCompleted = currentStep > s.id;
             const isCurrent = currentStep === s.id;
 
             return (
-              <div key={s.id} className="flex items-center gap-2 flex-shrink-0">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                    isCompleted
-                      ? 'bg-blue-600 text-white'
-                      : isCurrent
-                      ? 'bg-blue-600 text-white ring-4 ring-blue-100'
-                      : 'bg-slate-200 text-slate-500'
-                  }`}
-                >
-                  {isCompleted ? <Check className="w-4 h-4" /> : s.id}
+              <React.Fragment key={s.id}>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all flex-shrink-0 ${
+                      isCompleted
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : isCurrent
+                        ? 'bg-blue-600 text-white ring-4 ring-blue-100 shadow-xs'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3.5 h-3.5" /> : s.id}
+                  </div>
+                  <span
+                    className={`text-xs font-bold whitespace-nowrap transition-colors ${
+                      isCurrent
+                        ? 'text-slate-900 inline'
+                        : isCompleted
+                        ? 'text-slate-600 hidden sm:inline'
+                        : 'text-slate-400 hidden md:inline'
+                    }`}
+                  >
+                    {s.title}
+                  </span>
                 </div>
-                <span
-                  className={`text-xs font-bold ${
-                    isCurrent ? 'text-slate-900' : 'text-slate-400'
-                  }`}
-                >
-                  {s.title}
-                </span>
 
                 {idx < STEPS.length - 1 && (
-                  <div className="w-6 sm:w-10 h-0.5 bg-slate-200 mx-1" />
+                  <div
+                    className={`flex-1 min-w-3 sm:min-w-6 h-0.5 mx-1.5 sm:mx-2.5 transition-colors ${
+                      currentStep > s.id ? 'bg-blue-600' : 'bg-slate-200'
+                    }`}
+                  />
                 )}
-              </div>
+              </React.Fragment>
             );
           })}
         </div>
