@@ -20,6 +20,7 @@ import { Settlements } from './pages/Settlements';
 import { Activity } from './pages/Activity';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
+import { Invitations } from './pages/Invitations';
 
 export function App() {
   return (
@@ -72,6 +73,7 @@ export function App() {
             <Route path="/activity" element={<Activity />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/invitations" element={<Invitations />} />
           </Route>
         </Route>
 

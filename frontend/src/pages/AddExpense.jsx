@@ -1,3 +1,4 @@
+
 import React, {
   useState,
   useEffect,
@@ -22,21 +23,14 @@ import {
 import toast from 'react-hot-toast';
 
 export const AddExpense = () => {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const [searchParams] =
-    useSearchParams();
+  const [searchParams] = useSearchParams();
 
-  const editId =
-    searchParams.get(
-      'editId'
-    );
+  const editId = searchParams.get('editId');
 
   const preselectedGroupId =
-    searchParams.get(
-      'groupId'
-    );
+    searchParams.get('groupId');
 
   const [
     currentUser,
@@ -45,16 +39,14 @@ export const AddExpense = () => {
     userService.getCurrentUser()
   );
 
-  const [groups, setGroups] =
-    useState([]);
+  const [groups, setGroups] = useState([]);
 
   const [
     existingExpense,
     setExistingExpense,
   ] = useState(null);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [
     pageLoading,
@@ -65,68 +57,63 @@ export const AddExpense = () => {
    * Load groups and existing expense
    */
   useEffect(() => {
-    const loadData =
-      async () => {
-        try {
-          setPageLoading(true);
+    const loadData = async () => {
+      try {
+        setPageLoading(true);
 
-          /*
-           * Load current user
-           */
-          const profileResult =
-            await userService.loadProfile();
+        /*
+         * Load current user
+         */
+        const profileResult =
+          await userService.loadProfile();
 
-          if (
-            profileResult.success &&
+        if (
+          profileResult.success &&
+          profileResult.user
+        ) {
+          setCurrentUser(
             profileResult.user
-          ) {
-            setCurrentUser(
-              profileResult.user
-            );
-          }
-
-          /*
-           * Load groups
-           */
-          const groupsData =
-            await groupService.getAll();
-
-          setGroups(
-            groupsData || []
           );
-
-          /*
-           * If editing an existing expense,
-           * load it from backend.
-           */
-          if (editId) {
-            const expenseData =
-              await expenseService.getById(
-                editId
-              );
-
-            setExistingExpense(
-              expenseData || null
-            );
-          } else {
-            setExistingExpense(
-              null
-            );
-          }
-        } catch (error) {
-          console.error(
-            'Unable to load expense form data:',
-            error
-          );
-
-          toast.error(
-            error.message ||
-              'Unable to load expense data'
-          );
-        } finally {
-          setPageLoading(false);
         }
-      };
+
+        /*
+         * Load groups
+         */
+        const groupsData =
+          await groupService.getAll();
+
+        setGroups(groupsData || []);
+
+        /*
+         * If editing an existing expense,
+         * load it from backend.
+         */
+        if (editId) {
+          const expenseData =
+            await expenseService.getById(
+              editId
+            );
+
+          setExistingExpense(
+            expenseData || null
+          );
+        } else {
+          setExistingExpense(null);
+        }
+      } catch (error) {
+        console.error(
+          'Unable to load expense form data:',
+          error
+        );
+
+        toast.error(
+          error.message ||
+            'Unable to load expense data'
+        );
+      } finally {
+        setPageLoading(false);
+      }
+    };
 
     loadData();
   }, [editId]);
@@ -134,55 +121,54 @@ export const AddExpense = () => {
   /*
    * Save Expense
    */
-  const handleSave =
-    async (payload) => {
-      try {
-        setLoading(true);
+  const handleSave = async (payload) => {
+    try {
+      setLoading(true);
 
-        if (editId) {
-          await expenseService.update(
-            editId,
-            payload
-          );
-
-          toast.success(
-            'Expense updated successfully!'
-          );
-        } else {
-          await expenseService.create(
-            payload
-          );
-
-          toast.success(
-            'Expense created successfully!'
-          );
-        }
-
-        /*
-         * Navigate to the group after
-         * successful API operation.
-         */
-        if (payload.groupId) {
-          navigate(
-            `/groups/${payload.groupId}`
-          );
-        } else {
-          navigate('/expenses');
-        }
-      } catch (error) {
-        console.error(
-          'Unable to save expense:',
-          error
+      if (editId) {
+        await expenseService.update(
+          editId,
+          payload
         );
 
-        toast.error(
-          error.message ||
-            'Unable to save expense'
+        toast.success(
+          'Expense updated successfully!'
         );
-      } finally {
-        setLoading(false);
+      } else {
+        await expenseService.create(
+          payload
+        );
+
+        toast.success(
+          'Expense created successfully!'
+        );
       }
-    };
+
+      /*
+       * Navigate to the group after
+       * successful API operation.
+       */
+      if (payload.groupId) {
+        navigate(
+          `/groups/${payload.groupId}`
+        );
+      } else {
+        navigate('/expenses');
+      }
+    } catch (error) {
+      console.error(
+        'Unable to save expense:',
+        error
+      );
+
+      toast.error(
+        error.message ||
+          'Unable to save expense'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /*
    * Initial wizard data
@@ -293,12 +279,9 @@ export const AddExpense = () => {
 
       <ExpenseWizard
         groups={groups}
-        initialData={
-          initialData
-        }
-        onSaveExpense={
-          handleSave
-        }
+        initialData={initialData}
+        currentUser={currentUser}
+        onSaveExpense={handleSave}
         loading={loading}
       />
     </div>

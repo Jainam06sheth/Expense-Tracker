@@ -345,4 +345,61 @@ export const userService = {
 
     api.clearToken();
   },
+
+  /*
+   * Get all users
+   */
+  getAll: async () => {
+    try {
+      const response =
+        await api.request(
+          '/users',
+          {
+            method: 'GET'
+          }
+        );
+
+      return response.data || [];
+    } catch (error) {
+      throw new Error(
+        error.message ||
+        'Unable to get users'
+      );
+    }
+  },
+
+  /*
+   * Search users by email, name, or username
+   */
+  searchUsers: async (
+    searchTerm
+  ) => {
+    try {
+      // Build the endpoint with query parameters
+      let endpoint = '/users';
+      const queryParams = new URLSearchParams();
+      if (searchTerm) {
+        queryParams.append('search', searchTerm);
+      }
+
+      if (queryParams.toString()) {
+        endpoint += '?' + queryParams.toString();
+      }
+
+      const response =
+        await api.request(
+          endpoint,
+          {
+            method: 'GET'
+          }
+        );
+
+      return response.data || [];
+    } catch (error) {
+      throw new Error(
+        error.message ||
+        'Unable to search users'
+      );
+    }
+  },
 };

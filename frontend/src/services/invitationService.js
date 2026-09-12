@@ -1,8 +1,7 @@
+
 import { api } from "./api";
 
-const extractData = (
-  response
-) => {
+const extractData = (response) => {
   if (Array.isArray(response)) {
     return response;
   }
@@ -11,11 +10,7 @@ const extractData = (
     return response.data;
   }
 
-  if (
-    Array.isArray(
-      response.invitations
-    )
-  ) {
+  if (Array.isArray(response.invitations)) {
     return response.invitations;
   }
 
@@ -23,17 +18,14 @@ const extractData = (
 };
 
 export const invitationService = {
-  create: async (
-    invitationData
-  ) => {
-    const response =
-      await api.request(
-        "/invitations",
-        {
-          method: "POST",
-          body: invitationData,
-        }
-      );
+  // ===============================
+  // CREATE / SEND INVITATION
+  // ===============================
+  create: async (invitationData) => {
+    const response = await api.request("/invitations", {
+      method: "POST",
+      body: invitationData,
+    });
 
     return (
       response.data ||
@@ -42,48 +34,40 @@ export const invitationService = {
     );
   },
 
+  // ===============================
+  // GET MY INVITATIONS
+  // ===============================
   getAll: async () => {
-    const response =
-      await api.request(
-        "/invitations"
-      );
+    const response = await api.request("/invitations");
 
-    return extractData(
-      response
-    );
+    return extractData(response);
   },
 
-  accept: async (
-    invitationId
-  ) => {
-    const response =
-      await api.request(
-        `/invitations/${invitationId}/accept`,
-        {
-          method: "PUT",
-        }
-      );
-
-    return (
-      response.data ||
-      response
+  // ===============================
+  // ACCEPT INVITATION
+  // ===============================
+  accept: async (invitationId) => {
+    const response = await api.request(
+      `/invitations/${invitationId}/accept`,
+      {
+        method: "PUT",
+      }
     );
+
+    return response.data || response;
   },
 
-  reject: async (
-    invitationId
-  ) => {
-    const response =
-      await api.request(
-        `/invitations/${invitationId}/reject`,
-        {
-          method: "PUT",
-        }
-      );
-
-    return (
-      response.data ||
-      response
+  // ===============================
+  // REJECT INVITATION
+  // ===============================
+  reject: async (invitationId) => {
+    const response = await api.request(
+      `/invitations/${invitationId}/reject`,
+      {
+        method: "PUT",
+      }
     );
+
+    return response.data || response;
   },
 };

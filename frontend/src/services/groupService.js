@@ -167,4 +167,15 @@ export const groupService = {
       }
     );
   },
+
+  deleteGroup: async (
+    groupId
+  ) => {
+    return api.request(
+      `/groups/${groupId}`,
+      {
+        method: "DELETE",
+      }
+    );
+  },
 };

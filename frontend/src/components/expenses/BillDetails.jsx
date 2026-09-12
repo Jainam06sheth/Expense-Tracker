@@ -1,7 +1,12 @@
 import React from 'react';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
-import { Receipt, IndianRupee, Tag, Users, Calendar } from 'lucide-react';
+import {
+  Receipt,
+  IndianRupee,
+  Tag,
+  Calendar,
+} from 'lucide-react';
 
 const CATEGORIES = [
   { value: 'Food', label: 'Food & Dining' },
@@ -26,10 +31,64 @@ export const BillDetails = ({
     label: g.name,
   }));
 
-  const payerOptions = members.map((m) => ({
-    value: m.id,
-    label: m.name,
-  }));
+  // Get selected group
+  const selectedGroup =
+    groups.find(
+      (g) => String(g.id) === String(formData.groupId)
+    ) || groups[0];
+
+  /*
+   * PAID BY OPTIONS
+   *
+   * If members exist:
+   *    show all members
+   *
+   * If no members:
+   *    show group admin/creator
+   */
+  let payerOptions = [];
+
+  if (members.length > 0) {
+    payerOptions = members.map((member) => ({
+      value: member.id,
+      label:
+        member.name ||
+        member.username ||
+        member.email ||
+        'Member',
+    }));
+  } else if (selectedGroup?.createdBy) {
+    const admin = selectedGroup.createdBy;
+
+    /*
+     * createdBy can be:
+     *
+     * 1. Just an ID
+     * 2. Populated user object
+     */
+    if (typeof admin === 'object') {
+      payerOptions = [
+        {
+          value: admin.id || admin._id,
+          label:
+            admin.name ||
+            admin.username ||
+            admin.email ||
+            'Admin',
+        },
+      ];
+    } else {
+      payerOptions = [
+        {
+          value: admin,
+          label:
+            selectedGroup.createdByName ||
+            selectedGroup.adminName ||
+            'Admin',
+        },
+      ];
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -86,7 +145,11 @@ export const BillDetails = ({
           label="Expense Date"
           name="date"
           type="date"
-          value={formData.date ? formData.date.split('T')[0] : ''}
+          value={
+            formData.date
+              ? formData.date.split('T')[0]
+              : ''
+          }
           onChange={onChange}
           error={errors.date}
           icon={Calendar}
@@ -101,7 +164,11 @@ export const BillDetails = ({
           value={formData.paidBy}
           onChange={onChange}
           options={payerOptions}
-          placeholder="Who paid the bill?"
+          placeholder={
+            payerOptions.length > 0
+              ? 'Select who paid'
+              : 'No payer available'
+          }
           error={errors.paidBy}
           required
         />

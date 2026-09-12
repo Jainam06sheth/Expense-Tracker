@@ -32,6 +32,7 @@ export const ExpenseWizard = ({
   initialData = null,
   onSaveExpense,
   loading = false,
+  currentUser = null,
 }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -56,21 +57,125 @@ export const ExpenseWizard = ({
   const [customSplits, setCustomSplits] = useState(initialData?.splits || {});
   const [errors, setErrors] = useState({});
 
-  // Active Group and its members
-  const selectedGroup = groups.find((g) => g.id === formData.groupId) || groups[0];
-  const members = selectedGroup?.members || [];
+// Active Group
+const selectedGroup =
+  groups.find((g) => g.id === formData.groupId) || groups[0];
 
-  // Set default paidBy and overallParticipants when group changes
-  React.useEffect(() => {
-    if (members.length > 0) {
-      if (!formData.paidBy || !members.some((m) => m.id === formData.paidBy)) {
-        setFormData((prev) => ({ ...prev, paidBy: members[0].id }));
-      }
-      if (overallParticipants.length === 0) {
-        setOverallParticipants(members.map((m) => m.id));
-      }
+// Group members
+const members = selectedGroup?.members || [];
+
+// Admin / group creator
+const admin = selectedGroup?.createdBy;
+
+// Combined list: Admin + Group Members
+const groupPeople = useMemo(() => {
+  const people = [];
+
+  // Add admin first
+  if (admin) {
+    if (typeof admin === 'object') {
+      people.push({
+        id: admin.id || admin._id,
+        name:
+          admin.name ||
+          admin.username ||
+          admin.email ||
+          'Admin',
+        role: 'admin',
+      });
+    } else {
+      people.push({
+        id: admin,
+        name:
+          selectedGroup?.createdByName ||
+          selectedGroup?.adminName ||
+          'Admin',
+        role: 'admin',
+      });
     }
-  }, [formData.groupId, members]);
+  }
+
+  // Add members
+  members.forEach((member) => {
+    // Don't add admin twice if admin is already inside members
+    const alreadyExists = people.some(
+      (person) =>
+        String(person.id) === String(member.id)
+    );
+
+    if (!alreadyExists) {
+      people.push({
+        ...member,
+        role: 'member',
+      });
+    }
+  });
+
+  return people;
+}, [selectedGroup, admin, members]);
+
+// Admin / group creator
+const groupAdmin = selectedGroup?.createdBy;
+
+// Set default Paid By and participants
+React.useEffect(() => {
+  if (!selectedGroup) return;
+
+  // -----------------------------
+  // GROUP HAS MEMBERS
+  // -----------------------------
+  if (members.length > 0) {
+    const currentUserIsMember =
+      currentUser &&
+      members.some(
+        (m) => String(m.id) === String(currentUser.id)
+      );
+
+    const defaultPaidBy = currentUserIsMember
+      ? currentUser.id
+      : members[0].id;
+
+    // Keep existing payer if still valid
+    const payerStillExists = members.some(
+      (m) => String(m.id) === String(formData.paidBy)
+    );
+
+    if (!payerStillExists) {
+      setFormData((prev) => ({
+        ...prev,
+        paidBy: defaultPaidBy,
+      }));
+    }
+
+    // Default participants to all members
+    if (overallParticipants.length === 0) {
+      setOverallParticipants(
+        members.map((m) => m.id)
+      );
+    }
+  }
+
+  // -----------------------------
+  // NO MEMBERS
+  // -----------------------------
+  else if (groupAdmin) {
+    setFormData((prev) => ({
+      ...prev,
+      paidBy: groupAdmin,
+    }));
+
+    // No members to split with
+    if (overallParticipants.length === 0) {
+      setOverallParticipants([groupAdmin]);
+    }
+  }
+}, [
+  formData.groupId,
+  members,
+  selectedGroup,
+  currentUser,
+  groupAdmin,
+]);
 
   const membersMap = useMemo(() => {
     const map = {};
@@ -277,7 +382,7 @@ export const ExpenseWizard = ({
             const isCurrent = currentStep === s.id;
 
             return (
-              <div key={s.id} className="flex items-center gap-2 flex-shrink-0">
+              <div key={s.id} className="flex items-center gap-2 shrink-0">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
                     isCompleted
@@ -314,7 +419,7 @@ export const ExpenseWizard = ({
             onChange={handleFormChange}
             errors={errors}
             groups={groups}
-            members={members}
+            members={groupPeople}
           />
         )}
 

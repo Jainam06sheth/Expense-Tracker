@@ -145,63 +145,65 @@ export const GroupDetails = () => {
 
         /*
          * Users are needed by AddMemberModal.
-         *
-         * The current backend does NOT expose GET /users.
-         * So we build the available users from group-related
-         * data where possible.
-         *
-         * We will revisit this when we inspect AddMemberModal.
+         * Fetch all users from the backend.
          */
-        const userMap = new Map();
+        try {
+          const usersResult = await userService.getAll();
+          setUsers(usersResult || []);
+        } catch (error) {
+          console.error('Error fetching users:', error);
+          // Fallback to building from group data if API fails
+          const userMap = new Map();
 
-        if (
-          profileResult.success &&
-          profileResult.user
-        ) {
-          userMap.set(
-            String(
-              profileResult.user.id
-            ),
+          if (
+            profileResult.success &&
             profileResult.user
+          ) {
+            userMap.set(
+              String(
+                profileResult.user.id
+              ),
+              profileResult.user
+            );
+          }
+
+          (membersData || []).forEach(
+            (member) => {
+              const memberUser =
+                member.user || member;
+
+              const memberId =
+                memberUser.id ||
+                memberUser._id ||
+                member.userId;
+
+              if (memberId) {
+                userMap.set(
+                  String(memberId),
+                  {
+                    ...memberUser,
+                    id: memberId,
+                    _id: memberId,
+                    name:
+                      memberUser.name ||
+                      member.name ||
+                      'Member',
+                    email:
+                      memberUser.email ||
+                      member.email ||
+                    '',
+                  }
+                );
+              }
+            }
+          );
+
+          setUsers(
+            Array.from(
+              userMap.values()
+            )
           );
         }
-
-        (membersData || []).forEach(
-          (member) => {
-            const memberUser =
-              member.user || member;
-
-            const memberId =
-              memberUser.id ||
-              memberUser._id ||
-              member.userId;
-
-            if (memberId) {
-              userMap.set(
-                String(memberId),
-                {
-                  ...memberUser,
-                  id: memberId,
-                  _id: memberId,
-                  name:
-                    memberUser.name ||
-                    member.name ||
-                    'Member',
-                  email:
-                    memberUser.email ||
-                    member.email ||
-                    '',
-                }
-              );
-            }
-          }
-        );
-
-        setUsers(
-          Array.from(
-            userMap.values()
-          )
-        );
       } catch (error) {
         console.error(
           'Error loading group details:',

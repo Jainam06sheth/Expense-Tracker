@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+// const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_URL = import.meta.env.VITE_NETWORK_API_URL || "http://10.115.185.77:3001/api";
 
 const getToken = () => {
   return localStorage.getItem("token");

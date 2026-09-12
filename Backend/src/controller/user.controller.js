@@ -291,12 +291,21 @@ export const changePassword = async (req, res) => {
 // ===============================
 export const getAllUsers = async (req, res) => {
   try {
-    const { email } = req.query;
+    const { email, search } = req.query;
     let users;
 
     if (email) {
       // If email is provided, find users matching the email (case insensitive)
       users = await User.find({ email: new RegExp(email, 'i') }).select("-password");
+    } else if (search) {
+      // If search is provided, search by email, name, or username
+      users = await User.find({
+        $or: [
+          { email: new RegExp(search, 'i') },
+          { name: new RegExp(search, 'i') },
+          { username: new RegExp(search, 'i') }
+        ]
+      }).select("-password");
     } else {
       // Otherwise, get all users
       users = await User.find().select("-password");

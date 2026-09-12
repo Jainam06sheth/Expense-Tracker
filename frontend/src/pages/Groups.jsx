@@ -312,14 +312,6 @@ export const Groups = () => {
     setDeleteConfirmOpen(true);
   };
 
-  /*
-   * DELETE GROUP
-   *
-   * The current backend does NOT have a delete-group
-   * endpoint.
-   *
-   * Therefore we don't perform a local-only delete.
-   */
   const handleConfirmDelete = async () => {
     if (!groupToDelete) {
       return;
@@ -327,10 +319,12 @@ export const Groups = () => {
 
     try {
       setLoading(true);
-
-      toast.error(
-        'Group deletion is not supported by the backend yet.'
-      );
+      await groupService.deleteGroup(groupToDelete.id || groupToDelete._id);
+      setGroups(prev => prev.filter(g => String(g.id || g._id) !== String(groupToDelete.id || groupToDelete._id)));
+      toast.success('Group deleted successfully');
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      toast.error(error.message || 'Unable to delete group');
     } finally {
       setLoading(false);
       setDeleteConfirmOpen(false);

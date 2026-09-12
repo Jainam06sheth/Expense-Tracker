@@ -83,6 +83,18 @@ export const sendInvitation = async (req, res) => {
       });
     }
 
+    // Create activity for invitation sent
+    await Activity.create({
+  type: "invitation_sent",
+  description: `${req.user.name} invited ${user.name} to join ${group.name}`,
+  userId: req.user.id,
+  userName: req.user.name,
+  groupId: group._id,
+  groupName: group.name,
+  entityId: invitation._id,
+  entityType: "invitation",
+});
+
     return res.status(201).json({
       success: true,
       message: "Invitation sent successfully.",
