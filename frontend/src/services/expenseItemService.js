@@ -44,7 +44,7 @@ const extractItems = (
   return [];
 };
 
-export const expenseItemService = {
+export const expenseItemService= {
   create: async (
     itemData
   ) => {

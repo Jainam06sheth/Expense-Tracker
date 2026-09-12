@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { initializeSeedData } from './utils/seedData';
 
 // Layout
 import { MainLayout } from './components/layout/MainLayout';
@@ -23,11 +22,6 @@ import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 
 export function App() {
-  useEffect(() => {
-    // Seed initial data once if storage is empty
-    initializeSeedData();
-  }, []);
-
   return (
     <BrowserRouter>
       <Toaster

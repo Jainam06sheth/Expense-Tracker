@@ -1,0 +1,351 @@
+=== Health Check ===
+Endpoint: GET http://localhost:3001/
+Response Code: 200
+Response Body:
+{"success":true,"message":"Expense Tracker API Running 🚀"}
+
+
+=== Register User 1 ===
+Endpoint: POST http://localhost:3001/api/users/register
+Request Data: {
+    "name": "Test User",
+    "username": "testuser123",
+    "email": "test@example.com",
+    "password": "TestPass123!",
+    "phonenumber": "1234567890",
+    "college": "Test College"
+}
+Response Code: 409
+Response Body:
+{"success":false,"message":"User already exists."}
+
+
+=== Register User 2 ===
+Endpoint: POST http://localhost:3001/api/users/register
+Request Data: {
+    "name": "Test User 2",
+    "username": "testuser456",
+    "email": "test2@example.com",
+    "password": "TestPass456!",
+    "phonenumber": "0987654321",
+    "college": "Test College 2"
+}
+Response Code: 409
+Response Body:
+{"success":false,"message":"User already exists."}
+
+
+=== Login User 1 ===
+Endpoint: POST http://localhost:3001/api/users/login
+Request Data: {
+    "email": "test@example.com",
+    "password": "TestPass123!"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Login successful.","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYTU0YzQ5MDJmZDU3MzU2MjcwNmZhMyIsImlhdCI6MTc4OTIxODczOCwiZXhwIjoxNzg5MzA1MTM4fQ.FGWN97Bu_9H_GMZ4qJq-iuRwFl-h-xKy8Zq8ihToQcI","data":{"_id":"6aa54c4902fd573562706fa3","name":"Test User","username":"testuser123","email":"test@example.com","phonenumber":"1234567890","college":"Test College"}}
+
+
+=== Login User 2 ===
+Endpoint: POST http://localhost:3001/api/users/login
+Request Data: {
+    "email": "test2@example.com",
+    "password": "TestPass456!"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Login successful.","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYTU0YzQ5MDJmZDU3MzU2MjcwNmZhNCIsImlhdCI6MTc4OTIxODczOCwiZXhwIjoxNzg5MzA1MTM4fQ.-ul-0vziqx3xQOHkiPDHmQqrb12bN-pH-ffnZ825fUY","data":{"_id":"6aa54c4902fd573562706fa4","name":"Test User 2","username":"testuser456","email":"test2@example.com","phonenumber":"0987654321","college":"Test College 2"}}
+
+
+=== Get Profile User 1 ===
+Endpoint: GET http://localhost:3001/api/users/profile
+Response Code: 200
+Response Body:
+{"success":true,"data":{"_id":"6aa54c4902fd573562706fa3","name":"Test User","username":"testuser123","email":"test@example.com","phonenumber":"1234567890","avatar":"U","avatarColor":"bg-blue-600","college":"Test College","createdAt":"2026-09-12T12:57:45.203Z","updatedAt":"2026-09-12T12:57:45.203Z","__v":0}}
+
+
+=== Get Profile User 2 ===
+Endpoint: GET http://localhost:3001/api/users/profile
+Response Code: 200
+Response Body:
+{"success":true,"data":{"_id":"6aa54c4902fd573562706fa4","name":"Test User 2","username":"testuser456","email":"test2@example.com","phonenumber":"0987654321","avatar":"U","avatarColor":"bg-blue-600","college":"Test College 2","createdAt":"2026-09-12T12:57:45.891Z","updatedAt":"2026-09-12T12:57:45.891Z","__v":0}}
+
+
+=== Update Profile User 1 ===
+Endpoint: PUT http://localhost:3001/api/users/profile
+Request Data: {
+    "name": "Updated Test User",
+    "college": "Updated College"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Profile updated successfully.","data":{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com","phonenumber":"1234567890","college":"Updated College"}}
+
+
+=== Update Profile User 2 ===
+Endpoint: PUT http://localhost:3001/api/users/profile
+Request Data: {
+    "name": "Updated Test User 2",
+    "college": "Updated College 2"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Profile updated successfully.","data":{"_id":"6aa54c4902fd573562706fa4","name":"Updated Test User 2","username":"testuser456","email":"test2@example.com","phonenumber":"0987654321","college":"Updated College 2"}}
+
+
+=== Change Password User 1 ===
+Endpoint: PUT http://localhost:3001/api/users/change-password
+Request Data: {
+    "currentPassword": "TestPass123!",
+    "newPassword": "NewPass123!"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Password changed successfully."}
+
+
+=== Login User 1 with New Password ===
+Endpoint: POST http://localhost:3001/api/users/login
+Request Data: {
+    "email": "test@example.com",
+    "password": "NewPass123!"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Login successful.","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYTU0YzQ5MDJmZDU3MzU2MjcwNmZhMyIsImlhdCI6MTc4OTIxODc0MSwiZXhwIjoxNzg5MzA1MTQxfQ.VJbaeGe1HPpPdC79Zj3h7K5PlUkIdLHv6zcq_REK3Jg","data":{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com","phonenumber":"1234567890","college":"Updated College"}}
+
+
+=== Create Group ===
+Endpoint: POST http://localhost:3001/api/groups
+Request Data: {
+    "name": "Test Group",
+    "category": "Food",
+    "description": "Test group for API testing"
+}
+Response Code: 201
+Response Body:
+{"success":true,"message":"Group created successfully.","data":{"name":"Test Group","category":"Food","description":"Test group for API testing","createdBy":"6aa54c4902fd573562706fa3","_id":"6aa54fb5245da204f1ba2b3c","createdAt":"2026-09-12T13:12:21.744Z","updatedAt":"2026-09-12T13:12:21.744Z","__v":0}}
+
+
+=== Get All Groups ===
+Endpoint: GET http://localhost:3001/api/groups
+Response Code: 200
+Response Body:
+{"success":true,"count":1,"data":[{"_id":"6aa54fb5245da204f1ba2b3c","name":"Test Group","category":"Food","description":"Test group for API testing","createdBy":"6aa54c4902fd573562706fa3","createdAt":"2026-09-12T13:12:21.744Z","updatedAt":"2026-09-12T13:12:21.744Z","__v":0}]}
+
+
+=== Get Group by ID ===
+Endpoint: GET http://localhost:3001/api/groups/6aa54fb5245da204f1ba2b3c
+Response Code: 200
+Response Body:
+{"success":true,"data":{"_id":"6aa54fb5245da204f1ba2b3c","name":"Test Group","category":"Food","description":"Test group for API testing","createdBy":"6aa54c4902fd573562706fa3","createdAt":"2026-09-12T13:12:21.744Z","updatedAt":"2026-09-12T13:12:21.744Z","__v":0}}
+
+
+=== Update Group ===
+Endpoint: PUT http://localhost:3001/api/groups/6aa54fb5245da204f1ba2b3c
+Request Data: {
+    "name": "Updated Test Group",
+    "description": "Updated description for test group"
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Group updated successfully.","data":{"_id":"6aa54fb5245da204f1ba2b3c","name":"Updated Test Group","category":"Food","description":"Updated description for test group","createdBy":"6aa54c4902fd573562706fa3","createdAt":"2026-09-12T13:12:21.744Z","updatedAt":"2026-09-12T13:12:22.866Z","__v":0}}
+
+
+=== Send Invitation ===
+Endpoint: POST http://localhost:3001/api/invitations
+Request Data: {
+    "groupId": "6aa54fb5245da204f1ba2b3c",
+    "invitedUser": "6aa54c4902fd573562706fa4"
+}
+Response Code: 201
+Response Body:
+{"success":true,"message":"Invitation sent successfully.","data":{"groupId":"6aa54fb5245da204f1ba2b3c","invitedBy":"6aa54c4902fd573562706fa3","invitedUser":"6aa54c4902fd573562706fa4","status":"pending","respondedAt":null,"_id":"6aa54fb7245da204f1ba2b3f","createdAt":"2026-09-12T13:12:23.230Z","updatedAt":"2026-09-12T13:12:23.230Z","__v":0}}
+
+
+=== Get My Invitations (User2) ===
+Endpoint: GET http://localhost:3001/api/invitations
+Response Code: 200
+Response Body:
+{"success":true,"count":1,"data":[{"_id":"6aa54fb7245da204f1ba2b3f","groupId":{"_id":"6aa54fb5245da204f1ba2b3c","name":"Updated Test Group","category":"Food","description":"Updated description for test group","createdBy":"6aa54c4902fd573562706fa3","createdAt":"2026-09-12T13:12:21.744Z","updatedAt":"2026-09-12T13:12:22.866Z","__v":0},"invitedBy":{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com"},"invitedUser":"6aa54c4902fd573562706fa4","status":"pending","respondedAt":null,"createdAt":"2026-09-12T13:12:23.230Z","updatedAt":"2026-09-12T13:12:23.230Z","__v":0}]}
+
+
+=== Accept Invitation ===
+Endpoint: PUT http://localhost:3001/api/invitations/6aa54fb7245da204f1ba2b3f/accept
+Response Code: 200
+Response Body:
+{"success":true,"message":"Invitation accepted."}
+
+
+=== Create Expense ===
+Endpoint: POST http://localhost:3001/api/expenses
+Request Data: {
+    "name": "Test Expense",
+    "amount": 1000,
+    "groupId": "6aa54fb5245da204f1ba2b3c",
+    "paidBy": "6aa54c4902fd573562706fa3",
+    "date": "2026-09-12",
+    "category": "Food",
+    "description": "Test expense for API testing"
+}
+Response Code: 201
+Response Body:
+{"success":true,"message":"Expense created successfully.","data":{"groupId":"6aa54fb5245da204f1ba2b3c","name":"Test Expense","category":"Food","amount":1000,"paidBy":"6aa54c4902fd573562706fa3","date":"2026-09-12T00:00:00.000Z","notes":"","splitMethod":"equal","status":"unsettled","_id":"6aa54fb8245da204f1ba2b42","createdAt":"2026-09-12T13:12:24.198Z","updatedAt":"2026-09-12T13:12:24.198Z","__v":0}}
+
+
+=== Get Expenses by Group ===
+Endpoint: GET http://localhost:3001/api/expenses/group/6aa54fb5245da204f1ba2b3c
+Response Code: 200
+Response Body:
+{"success":true,"count":1,"data":[{"_id":"6aa54fb8245da204f1ba2b42","groupId":"6aa54fb5245da204f1ba2b3c","name":"Test Expense","category":"Food","amount":1000,"paidBy":"6aa54c4902fd573562706fa3","date":"2026-09-12T00:00:00.000Z","notes":"","splitMethod":"equal","status":"unsettled","createdAt":"2026-09-12T13:12:24.198Z","updatedAt":"2026-09-12T13:12:24.198Z","__v":0}]}
+
+
+=== Get Expense by ID ===
+Endpoint: GET http://localhost:3001/api/expenses/6aa54fb8245da204f1ba2b42
+Response Code: 200
+Response Body:
+{"success":true,"data":{"_id":"6aa54fb8245da204f1ba2b42","groupId":"6aa54fb5245da204f1ba2b3c","name":"Test Expense","category":"Food","amount":1000,"paidBy":"6aa54c4902fd573562706fa3","date":"2026-09-12T00:00:00.000Z","notes":"","splitMethod":"equal","status":"unsettled","createdAt":"2026-09-12T13:12:24.198Z","updatedAt":"2026-09-12T13:12:24.198Z","__v":0}}
+
+
+=== Update Expense ===
+Endpoint: PUT http://localhost:3001/api/expenses/6aa54fb8245da204f1ba2b42
+Request Data: {
+    "name": "Updated Test Expense",
+    "amount": 1500
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Expense updated successfully.","data":{"_id":"6aa54fb8245da204f1ba2b42","groupId":"6aa54fb5245da204f1ba2b3c","name":"Updated Test Expense","category":"Food","amount":1500,"paidBy":"6aa54c4902fd573562706fa3","date":"2026-09-12T00:00:00.000Z","notes":"","splitMethod":"equal","status":"unsettled","createdAt":"2026-09-12T13:12:24.198Z","updatedAt":"2026-09-12T13:12:25.165Z","__v":0}}
+
+
+=== Create Expense Item ===
+Endpoint: POST http://localhost:3001/api/expense-items
+Request Data: {
+    "name": "Test Item",
+    "amount": 500,
+    "expenseId": "6aa54fb8245da204f1ba2b42",
+    "participantIds": ["6aa54c4902fd573562706fa3", "6aa54c4902fd573562706fa4"]
+}
+Response Code: 201
+Response Body:
+{"success":true,"message":"Expense item added.","data":{"expenseId":"6aa54fb8245da204f1ba2b42","name":"Test Item","amount":500,"participantIds":["6aa54c4902fd573562706fa3","6aa54c4902fd573562706fa4"],"_id":"6aa54fb9245da204f1ba2b45","createdAt":"2026-09-12T13:12:25.565Z","updatedAt":"2026-09-12T13:12:25.565Z","__v":0}}
+
+
+=== Get Expense Items by Expense ID ===
+Endpoint: GET http://localhost:3001/api/expense-items/6aa54fb8245da204f1ba2b42
+Response Code: 200
+Response Body:
+{"success":true,"data":[{"_id":"6aa54fb9245da204f1ba2b45","expenseId":"6aa54fb8245da204f1ba2b42","name":"Test Item","amount":500,"participantIds":[{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com"},{"_id":"6aa54c4902fd573562706fa4","name":"Updated Test User 2","username":"testuser456","email":"test2@example.com"}],"createdAt":"2026-09-12T13:12:25.565Z","updatedAt":"2026-09-12T13:12:25.565Z","__v":0}]}
+
+
+=== Delete Expense Item ===
+Endpoint: DELETE http://localhost:3001/api/expense-items/6aa54fb9245da204f1ba2b45
+Response Code: 200
+Response Body:
+{"success":true,"message":"Expense item deleted."}
+
+
+=== Get Splits Me ===
+Endpoint: GET http://localhost:3001/api/splits/me
+Response Code: 200
+Response Body:
+{"success":true,"count":0,"data":[]}
+
+
+=== Get Splits by Expense ID ===
+Endpoint: GET http://localhost:3001/api/splits/6aa54fb8245da204f1ba2b42
+Response Code: 200
+Response Body:
+{"success":true,"data":[]}
+
+
+=== Pay Split (non-existent ID) ===
+Endpoint: PUT http://localhost:3001/api/splits/000000000000000000000000/pay
+Response Code: 404
+Response Body:
+{"success":false,"message":"Expense split not found."}
+
+
+=== Create Payment ===
+Endpoint: POST http://localhost:3001/api/payments
+Request Data: {
+    "fromUser": "6aa54c4902fd573562706fa3",
+    "toUser": "6aa54c4902fd573562706fa4",
+    "amount": 500,
+    "groupId": "6aa54fb5245da204f1ba2b3c",
+    "description": "Test payment for API testing"
+}
+Response Code: 201
+Response Body:
+{"success":true,"message":"Payment request created.","data":{"groupId":"6aa54fb5245da204f1ba2b3c","fromUser":"6aa54c4902fd573562706fa3","toUser":"6aa54c4902fd573562706fa4","amount":500,"status":"pending","_id":"6aa54fbb245da204f1ba2b46","date":"2026-09-12T13:12:27.275Z","createdAt":"2026-09-12T13:12:27.275Z","updatedAt":"2026-09-12T13:12:27.275Z","__v":0}}
+
+
+=== Get Payments Me ===
+Endpoint: GET http://localhost:3001/api/payments/me
+Response Code: 200
+Response Body:
+{"success":true,"count":1,"data":[{"_id":"6aa54fbb245da204f1ba2b46","groupId":{"_id":"6aa54fb5245da204f1ba2b3c","name":"Updated Test Group","category":"Food"},"fromUser":{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com"},"toUser":{"_id":"6aa54c4902fd573562706fa4","name":"Updated Test User 2","username":"testuser456","email":"test2@example.com"},"amount":500,"status":"pending","date":"2026-09-12T13:12:27.275Z","createdAt":"2026-09-12T13:12:27.275Z","updatedAt":"2026-09-12T13:12:27.275Z","__v":0}]}
+
+
+=== Get Payments by Group ===
+Endpoint: GET http://localhost:3001/api/payments/group/6aa54fb5245da204f1ba2b3c
+Response Code: 200
+Response Body:
+{"success":true,"data":[{"_id":"6aa54fbb245da204f1ba2b46","groupId":"6aa54fb5245da204f1ba2b3c","fromUser":{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com"},"toUser":{"_id":"6aa54c4902fd573562706fa4","name":"Updated Test User 2","username":"testuser456","email":"test2@example.com"},"amount":500,"status":"pending","date":"2026-09-12T13:12:27.275Z","createdAt":"2026-09-12T13:12:27.275Z","updatedAt":"2026-09-12T13:12:27.275Z","__v":0}]}
+
+
+=== Complete Payment ===
+Endpoint: PUT http://localhost:3001/api/payments/6aa54fbb245da204f1ba2b46/complete
+Response Code: 403
+Response Body:
+{"success":false,"message":"Only receiver can confirm payment."}
+
+
+=== Reject Payment ===
+Endpoint: PUT http://localhost:3001/api/payments/6aa54fbb245da204f1ba2b46/reject
+Response Code: 403
+Response Body:
+{"success":false,"message":"Only receiver can reject payment."}
+
+
+=== Get Balances by Group ===
+Endpoint: GET http://localhost:3001/api/balances/6aa54fb5245da204f1ba2b3c
+Response Code: 200
+Response Body:
+{"success":true,"data":[{"user":{"_id":"6aa54c4902fd573562706fa3","name":"Updated Test User","username":"testuser123","email":"test@example.com"},"balance":0},{"user":{"_id":"6aa54c4902fd573562706fa4","name":"Updated Test User 2","username":"testuser456","email":"test2@example.com"},"balance":0}]}
+
+
+=== Get Activities Me ===
+Endpoint: GET http://localhost:3001/api/activities/me
+Response Code: 200
+Response Body:
+{"success":true,"count":3,"data":[{"_id":"6aa54fb9245da204f1ba2b44","type":"expense_updated","description":"Updated Test User updated expense \"Updated Test Expense\"","userId":"6aa54c4902fd573562706fa3","userName":"Updated Test User","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Updated Test Group","entityId":"6aa54fb8245da204f1ba2b42","entityType":"expense","date":"2026-09-12T13:12:25.170Z","createdAt":"2026-09-12T13:12:25.170Z","updatedAt":"2026-09-12T13:12:25.170Z","__v":0},{"_id":"6aa54fb8245da204f1ba2b43","type":"expense_created","description":"Updated Test User added \"Test Expense\" in Updated Test Group (₹1000)","userId":"6aa54c4902fd573562706fa3","userName":"Updated Test User","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Updated Test Group","entityId":"6aa54fb8245da204f1ba2b42","entityType":"expense","date":"2026-09-12T13:12:24.203Z","createdAt":"2026-09-12T13:12:24.204Z","updatedAt":"2026-09-12T13:12:24.204Z","__v":0},{"_id":"6aa54fb5245da204f1ba2b3e","type":"group_created","description":"Updated Test User created group Test Group","userId":"6aa54c4902fd573562706fa3","userName":"Updated Test User","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Test Group","entityId":"6aa54fb5245da204f1ba2b3c","entityType":"group","date":"2026-09-12T13:12:21.789Z","createdAt":"2026-09-12T13:12:21.789Z","updatedAt":"2026-09-12T13:12:21.789Z","__v":0}]}
+
+
+=== Get Activities by Group ===
+Endpoint: GET http://localhost:3001/api/activities/group/6aa54fb5245da204f1ba2b3c
+Response Code: 200
+Response Body:
+{"success":true,"count":4,"data":[{"_id":"6aa54fb9245da204f1ba2b44","type":"expense_updated","description":"Updated Test User updated expense \"Updated Test Expense\"","userId":"6aa54c4902fd573562706fa3","userName":"Updated Test User","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Updated Test Group","entityId":"6aa54fb8245da204f1ba2b42","entityType":"expense","date":"2026-09-12T13:12:25.170Z","createdAt":"2026-09-12T13:12:25.170Z","updatedAt":"2026-09-12T13:12:25.170Z","__v":0},{"_id":"6aa54fb8245da204f1ba2b43","type":"expense_created","description":"Updated Test User added \"Test Expense\" in Updated Test Group (₹1000)","userId":"6aa54c4902fd573562706fa3","userName":"Updated Test User","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Updated Test Group","entityId":"6aa54fb8245da204f1ba2b42","entityType":"expense","date":"2026-09-12T13:12:24.203Z","createdAt":"2026-09-12T13:12:24.204Z","updatedAt":"2026-09-12T13:12:24.204Z","__v":0},{"_id":"6aa54fb7245da204f1ba2b41","type":"member_added","description":"Updated Test User 2 joined Updated Test Group","userId":"6aa54c4902fd573562706fa4","userName":"Updated Test User 2","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Updated Test Group","entityId":"6aa54c4902fd573562706fa4","entityType":"member","date":"2026-09-12T13:12:23.819Z","createdAt":"2026-09-12T13:12:23.819Z","updatedAt":"2026-09-12T13:12:23.819Z","__v":0},{"_id":"6aa54fb5245da204f1ba2b3e","type":"group_created","description":"Updated Test User created group Test Group","userId":"6aa54c4902fd573562706fa3","userName":"Updated Test User","groupId":"6aa54fb5245da204f1ba2b3c","groupName":"Test Group","entityId":"6aa54fb5245da204f1ba2b3c","entityType":"group","date":"2026-09-12T13:12:21.789Z","createdAt":"2026-09-12T13:12:21.789Z","updatedAt":"2026-09-12T13:12:21.789Z","__v":0}]}
+
+
+=== Get Settings ===
+Endpoint: GET http://localhost:3001/api/settings
+Response Code: 200
+Response Body:
+{"success":true,"data":{"userId":"6aa54c4902fd573562706fa3","currency":"INR","theme":"light","notifications":true,"emailAlerts":true,"_id":"6aa54fbd245da204f1ba2b47","createdAt":"2026-09-12T13:12:29.401Z","updatedAt":"2026-09-12T13:12:29.401Z","__v":0}}
+
+
+=== Update Settings ===
+Endpoint: PUT http://localhost:3001/api/settings
+Request Data: {
+    "currency": "USD",
+    "theme": "dark",
+    "notifications": false,
+    "emailAlerts": true
+}
+Response Code: 200
+Response Body:
+{"success":true,"message":"Settings updated successfully.","data":{"_id":"6aa54fbd245da204f1ba2b47","userId":"6aa54c4902fd573562706fa3","currency":"USD","theme":"dark","notifications":false,"emailAlerts":true,"createdAt":"2026-09-12T13:12:29.401Z","updatedAt":"2026-09-12T13:12:29.729Z","__v":0}}
+
+

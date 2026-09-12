@@ -117,7 +117,7 @@ export const BalanceBreakdown = ({
               >
                 <div className="flex items-center gap-2.5">
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center ${
                       isPayment ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
                     }`}
                   >

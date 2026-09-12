@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { groupService } from "./groupService";
 
 const normalizeExpense = (
   expense = null
@@ -159,4 +160,28 @@ export const expenseService = {
       }
     );
   },
+
+  /**
+   * Get all expenses for the current user across all groups.
+   * This is used by components that need a flat list of all expenses.
+   */
+  getAll: async () => {
+    try {
+      const groups = await groupService.getAll();
+      let allExpenses = [];
+
+      for (const group of groups) {
+        const groupId = group.id || group._id;
+        if (!groupId) continue;
+
+        const groupExpenses = await expenseService.getByGroup(groupId);
+        allExpenses = [...allExpenses, ...(groupExpenses || [])];
+      }
+
+      return allExpenses;
+    } catch (error) {
+      console.error('Error in expenseService.getAll:', error);
+      return [];
+    }
+  }
 };

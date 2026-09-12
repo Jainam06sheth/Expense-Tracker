@@ -1,0 +1,3 @@
+◇ injected env (3) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+Server running on port http://localhost:3001
+database is connected
